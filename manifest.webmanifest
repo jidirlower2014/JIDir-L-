@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "جماعت اسلامی ضلع دیر پائین",
+  "short_name": "جماعت دیر پائین",
+  "description": "حساب کتاب، اراکین، امراء اور اطلاعات",
+  "lang": "ur",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a3230",
+  "theme_color": "#0a3230",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
