@@ -307,6 +307,11 @@ body.ro .sheet-btn.dep:not(#arkRepBtn), body.ro .n-composer, body.ro .n-del, bod
 #printSheet h2, #printSheet h3{font-size:16px; line-height:2;}
 #printSheet td, #printSheet th{font-size:14px; line-height:1.9;}
 @page{size:A4; margin:12mm;}
+@media print{
+  html, body{height:auto !important; overflow:visible !important;}
+  body > *:not(#printOverlay){display:none !important;}
+  #printOverlay{position:static !important; overflow:visible !important; height:auto !important; inset:auto !important;}
+}
 #printSheet thead{display:table-header-group;}
 #printSheet tr{page-break-inside:avoid;}
 </style>
@@ -3740,6 +3745,8 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       m.wasooli = m._base.wasooli; m.baqaya = m._base.baqaya; m.monthly = Object.assign({}, m._base.monthly); m._dep = 0;
       const fe = (window.__finLatest||{})[m._key];
       if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
+      { const grp = (AR_DATA[m._zone.id]||[]).find(g=>g.m===m.name), cnt = grp ? grp.mem.length : (m.arkan||0);
+        if(grp) m.arkan = cnt; m.saalana = cnt * 4800; m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
     });
     const seen = new Set();
     server.concat(pending).forEach(d=>{
@@ -3879,10 +3886,22 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">مقامی امیر</span><input id="fAmeer" class="urdu"></label>
     <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="fContact" type="tel" inputmode="tel"></label>
     <label class="dep-field"><span class="urdu">سابقہ بقایاجات</span><input id="fSabiqa" type="number" inputmode="numeric" min="0"></label>
-    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت</span><input id="fSaalana" type="number" inputmode="numeric" min="0"></label>
+    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت (خودکار: ارکان × 4800)</span><input id="fSaalana" disabled type="number" inputmode="numeric" min="0"></label>
     <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
     <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="finEditClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="arkAddOverlay" onclick="if(event.target===this) arkAddClose()">
+  <div class="action-sheet" style="max-height:88vh; overflow:auto;">
+    <h4 class="urdu" id="arkAddTitle"></h4>
+    <label class="dep-field"><span class="urdu">نام</span><input id="aName" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">ولدیت</span><input id="aFather" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="aPhone" type="tel" inputmode="tel"></label>
+    <label class="dep-field"><span class="urdu">ضلعی رکنیت نمبر</span><input id="aNo" type="number" inputmode="numeric"></label>
+    <label class="dep-field"><span class="urdu">تاریخ منظوری رکنیت</span><input type="date" id="aSince"></label>
+    <button class="sheet-btn dep urdu" onclick="arkAddSave()"><span class="ic">✅</span> رکن شامل کریں</button>
+    <button class="sheet-cancel urdu" onclick="arkAddClose()">منسوخ</button>
   </div>
 </div>
 <div class="sheet-overlay" id="arkEditOverlay" onclick="if(event.target===this) arkEditClose()">
@@ -3890,6 +3909,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <h4 class="urdu">رکن کی ترمیم / منتقلی</h4>
     <label class="dep-field"><span class="urdu">نام</span><input id="eName" class="urdu"></label>
     <label class="dep-field"><span class="urdu">ولدیت</span><input id="eFather" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">ضلعی رکنیت نمبر</span><input id="eNo" type="number" inputmode="numeric"></label>
     <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="ePhone" type="tel" inputmode="tel"></label>
     <label class="dep-field"><span class="urdu">زون</span><select id="eZone" class="urdu"></select></label>
     <label class="dep-field"><span class="urdu">مقام (دوسرے مقام میں منتقل کرنے کے لیے بدلیں)</span><select id="eMuqam" class="urdu"></select></label>
@@ -4290,12 +4310,13 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const ev = events(), items = [];
     Object.keys(base).forEach(z=>base[z].forEach(b=>b.mem.forEach(m=>items.push({m, z, mu:b.g.m, key:m._key}))));
     ev.forEach(e=>{
-      if(e.type==='add') items.push({m:{n:e.n, f:e.f||'', c:e.c||'', k:'', d:'', s:e.date, _key:'add:'+e.id}, z:e.zone, mu:e.muqam, key:'add:'+e.id});
+      if(e.type==='add') items.push({m:{n:e.n, f:e.f||'', c:e.c||'', k:'', d:(e.x&&e.x.d)||'', s:(e.x&&e.x.s)||e.date, _key:'add:'+e.id}, z:e.zone, mu:e.muqam, key:'add:'+e.id});
       else if(e.type==='remove'){ const i = items.findIndex(x=>x.key===e.key); if(i>-1) items.splice(i,1); }
       else if(e.type==='edit'){
         const it = items.find(x=>x.key===e.key); if(!it) return;
         it.m = Object.assign({}, it.m, {n:e.n, f:e.f||'', c:e.c||''});
         if(e.x && e.x.s !== undefined) it.m.s = e.x.s;
+        if(e.x && e.x.d !== undefined) it.m.d = e.x.d;
         it.z = e.zone; it.mu = e.muqam;
       }
     });
@@ -4306,6 +4327,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       if(!g){ g = {m:it.mu, mem:[]}; AR_DATA[it.z].push(g); }
       g.mem.push(it.m);
     });
+    const num = v=>{ const n = parseInt(String(v||'').replace(/\D/g,''),10); return isNaN(n) ? Infinity : n; };
+    Object.keys(AR_DATA).forEach(z=>AR_DATA[z].forEach(g=>g.mem.sort((a,b)=>num(a.d)-num(b.d))));
+    if(window.__depRebuild) window.__depRebuild();
     renderAll();
     if($('arkanDetail').classList.contains('open') && lastG) openArkanDetail(lastG);
     if($('arkRep').style.display==='block') renderRep();
@@ -4335,6 +4359,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.openArkanDetail = function(g){
     lastG = g; _open(g);
     if(window.__role!=='admin' || window.__ro) return;
+    if(!$('arkAddBtn')){ const list = $('adArkanNames'); const ab = document.createElement('button'); ab.id = 'arkAddBtn'; ab.className = 'sheet-btn dep urdu'; ab.innerHTML = '<span class="ic">➕</span> نیا رکن شامل کریں'; ab.onclick = arkAddOpen; list.parentNode.insertBefore(ab, list); }
     document.querySelectorAll('#adArkanNames li').forEach((li,i)=>{
       const m = g.mem[i]; if(!m) return;
       const b = document.createElement('button');
@@ -4363,7 +4388,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('eZone').innerHTML = DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===z?' selected':'')+'>'+esc(x.name)+'</option>').join('');
     fillMuqam(z, curG.m);
     $('eZone').onchange = ()=>fillMuqam($('eZone').value, '');
-    $('eSince').value = curM.s || ''; $('eDate').value = today();
+    $('eSince').value = curM.s || ''; $('eNo').value = curM.d || ''; $('eDate').value = today();
     $('arkEditOverlay').classList.add('open');
   };
   window.arkEditClose = function(){ $('arkEditOverlay').classList.remove('open'); };
@@ -4371,13 +4396,28 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if(window.__ro || !curG || !curM) return;
     const oz = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(curG)>-1);
     const n = $('eName').value.trim(); if(!n){ toast('نام لکھیں'); return; }
-    const nz = $('eZone').value, nm = $('eMuqam').value, f = $('eFather').value.trim(), c = $('ePhone').value.trim(), s0 = $('eSince').value;
+    const nz = $('eZone').value, nm = $('eMuqam').value, f = $('eFather').value.trim(), c = $('ePhone').value.trim(), s0 = $('eSince').value, d0 = $('eNo').value.trim();
     const moved = (nz!==oz || nm!==curG.m);
-    if(!moved && n===curM.n && f===(curM.f||'') && c===(curM.c||'') && s0===(curM.s||'')){ toast('کوئی تبدیلی نہیں کی'); return; }
+    if(!moved && n===curM.n && f===(curM.f||'') && c===(curM.c||'') && s0===(curM.s||'') && d0===String(curM.d||'')){ toast('کوئی تبدیلی نہیں کی'); return; }
     const now = Date.now();
     addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'edit', reason:moved?'منتقلی':'ترمیم', zone:nz, muqam:nm, n, f, c, key:curM._key,
-      date:$('eDate').value||today(), t:now, x:{s:s0, from: moved ? curG.m+' — '+zname(oz) : ''}});
+      date:$('eDate').value||today(), t:now, x:{s:s0, d:d0, from: moved ? curG.m+' — '+zname(oz) : ''}});
     arkEditClose(); toast(moved ? 'رکن منتقل ہو گیا ✓' : 'ترمیم محفوظ ہو گئی ✓');
+  };
+  window.arkAddOpen = function(){
+    if(window.__ro || !lastG) return;
+    ['aName','aFather','aPhone','aNo'].forEach(i=>{ $(i).value = ''; }); $('aSince').value = today();
+    $('arkAddTitle').textContent = 'نیا رکن — ' + lastG.m;
+    $('arkAddOverlay').classList.add('open');
+  };
+  window.arkAddClose = function(){ $('arkAddOverlay').classList.remove('open'); };
+  window.arkAddSave = function(){
+    if(window.__ro || !lastG) return;
+    const n = $('aName').value.trim(); if(!n){ toast('نام لکھیں'); return; }
+    const z = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(lastG)>-1), now = Date.now(), id = now.toString(36)+Math.random().toString(36).slice(2,5);
+    const since = $('aSince').value || today();
+    addEvent({id, type:'add', reason:'نیا رکن', zone:z, muqam:lastG.m, n, f:$('aFather').value.trim(), c:$('aPhone').value.trim(), key:'add:'+id, date:since, t:now, x:{s:since, d:$('aNo').value.trim()}});
+    arkAddClose(); toast('نیا رکن شامل ہو گیا ✓');
   };
   window.arkDelClose = function(){ $('arkDelOverlay').classList.remove('open'); };
   window.arkRemove = function(reason){
@@ -4419,7 +4459,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + (rows ? '<div style="overflow-x:auto;"><table class="fin-table urdu" style="margin-bottom:12px;text-align:center;"><tr><td>مہینہ</td><td>شامل</td><td>مستعفی</td><td>اخراج</td><td>فوت</td><td>حلف نہیں</td></tr>'+rows+'</table></div>' : '')
       + (l.map(e=>'<div class="cand-card"><div class="cand-top"><div><div class="cand-name urdu">'+esc(e.n)+'</div><div class="cand-sub urdu">'+esc(e.muqam)+' — '+esc(zname(e.zone))+'</div></div><span class="cand-badge urdu '+cls(e)+'">'+(e.type==='add'?'✅ ':'')+esc(e.reason)+'</span></div><div class="cand-sub" style="direction:ltr;text-align:left;margin-top:6px;">'+esc(e.date)+(e.c?' • '+esc(e.c):'')+'</div>'+(e.x&&e.x.from?'<div class="cand-sub urdu" style="margin-top:4px;">پہلے: '+esc(e.x.from)+'</div>':'')+'</div>').join('') || '<div class="n-empty urdu">اس فلٹر میں کوئی ریکارڈ نہیں</div>');
   };
-  if(Object.keys(pend).length || server.length) rebuild();
+  rebuild();
 })();
 </script>
 <script>
@@ -4432,15 +4472,16 @@ window.buildPrintHTML = function(g){
   const now = Date.now();
   // منظوری کی تاریخ سے 90 دن پورے نہ ہوئے ہوں تو استصواب/انتخاب کے لیے اہل نہیں
   const short = a => a.s && Math.floor((now - new Date(a.s+'T00:00:00').getTime())/86400000) < 90;
-  const rows = g.mem.map((a,i)=>{
+  const num = v=>{ const n = parseInt(String(v||'').replace(/\D/g,''),10); return isNaN(n) ? Infinity : n; };
+  const rows = g.mem.slice().sort((x,y)=>num(x.d)-num(y.d)).map((a,i)=>{
     const kv = (purpose && short(a)) ? 'استصواب یا انتخاب کے لئے وقت پورا نہیں ہے۔' : (a.k||'-');
-    return `<tr><td>${i+1}</td><td>${a.d||'-'}</td><td>${a.n}</td><td>${a.f||'-'}</td><td class="ltr">${a.c||'-'}</td><td class="urdu">${kv}</td>${purpose?'<td style="min-width:90px;"></td>':''}</tr>`;
+    return `<tr><td>${i+1}</td><td>${a.d||'-'}</td><td class="ltr">${a.s||'-'}</td><td>${a.n}</td><td>${a.f||'-'}</td><td class="ltr">${a.c||'-'}</td><td class="urdu">${kv}</td>${purpose?'<td style="min-width:90px;"></td>':''}</tr>`;
   }).join('');
-  const N = purpose ? 7 : 6, cs = 'style="font-size:16px;border:none;background:#fff;color:#0f4c4a;"';
+  const N = purpose ? 8 : 7, cs = 'style="font-size:16px;border:none;background:#fff;color:#0f4c4a;"';
   return `<table><thead>
     <tr><th colspan="${N}" class="urdu" ${cs}>فہرست ارکان جماعت اسلامی ضلع دیر پائین</th></tr>
     <tr><th colspan="${N}" class="urdu" ${cs}>مقام: ${g.m} &nbsp;&nbsp;&nbsp; زون: ${zn}${purpose?' &nbsp;&nbsp;&nbsp; برائے: '+purpose:''}</th></tr>
-    <tr><th class="urdu">نمبر شمار</th><th class="urdu">سلسلہ نمبر</th><th class="urdu">نام رکن</th><th class="urdu">ولدیت</th><th class="urdu">رابطہ نمبر</th><th class="urdu">کیفیت</th>${purpose?'<th class="urdu">دستخط</th>':''}</tr></thead>
+    <tr><th class="urdu">نمبر شمار</th><th class="urdu">ضلعی رکنیت نمبر</th><th class="urdu">تاریخ منظوری رکنیت</th><th class="urdu">نام رکن</th><th class="urdu">ولدیت</th><th class="urdu">رابطہ نمبر</th><th class="urdu">کیفیت</th>${purpose?'<th class="urdu">دستخط</th>':''}</tr></thead>
     <tbody>${rows}</tbody></table>`;
 };
 </script>
@@ -4470,6 +4511,7 @@ window.buildPrintHTML = function(g){
       if(cut < canvas.height){
         const fit = rowEnds.filter(v=>v > y + 40 && v <= cut);          // صفحہ قطار کے آخر پر ٹوٹے
         if(fit.length) cut = Math.floor(fit[fit.length-1]);
+        if(cut <= y) cut = Math.min(canvas.height, y + cap);
       }
       const off = first ? 0 : headPx;
       const part = document.createElement('canvas');
