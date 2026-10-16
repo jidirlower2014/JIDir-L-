@@ -299,6 +299,16 @@ h2.section-title::before{content:''; position:absolute; right:0; top:18%; bottom
 .cand-actions{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
 .cand-actions a,.cand-actions button{flex:1; text-align:center; padding:7px 4px; border-radius:10px; border:1px solid var(--teal); background:none; color:var(--teal); font-size:13px; text-decoration:none; cursor:pointer;}
 .cand-actions .del{border-color:var(--danger); color:var(--danger); flex:0 0 44px;}
+body.ro .sheet-btn.dep:not(#arkRepBtn), body.ro .n-composer, body.ro .n-del, body.ro .cand-actions button{display:none !important;}
+
+/* ===== PDF فہرست: جمیل نوری نستعلیق ===== */
+@font-face{font-family:'Jameel Noori Nastaleeq'; src:local('Jameel Noori Nastaleeq'), local('JameelNooriNastaleeq'), url('fonts/JameelNooriNastaleeq.ttf') format('truetype'); font-display:swap;}
+#printSheet, #printSheet *{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;}
+#printSheet h2, #printSheet h3{font-size:16px; line-height:2;}
+#printSheet td, #printSheet th{font-size:14px; line-height:1.9;}
+@page{size:A4; margin:12mm;}
+#printSheet thead{display:table-header-group;}
+#printSheet tr{page-break-inside:avoid;}
 </style>
 </head>
 <body>
@@ -380,6 +390,7 @@ h2.section-title::before{content:''; position:absolute; right:0; top:18%; bottom
       <tr class="total"><td class="urdu">باقی</td><td id="hdBaqaya"></td></tr>
     </table>
     <button class="sheet-btn dep urdu" onclick="openDeposit()"><span class="ic">💰</span> روپے جمع کریں</button>
+    <button class="sheet-btn dep urdu" onclick="finEditOpen()"><span class="ic">✏️</span> مالیاتی ریکارڈ میں ترمیم</button>
     <button class="sheet-btn wa urdu" style="width:100%; justify-content:center;" onclick="sendHisabWhatsapp()"><span class="ic">📲</span> یہ ریکارڈ واٹس ایپ پر بھیجیں</button>
   </div>
 
@@ -481,6 +492,8 @@ h2.section-title::before{content:''; position:absolute; right:0; top:18%; bottom
   <div class="action-sheet">
     <h4 class="urdu" id="sheetMuqamName"></h4>
     <p class="sub" id="sheetMuqamCount"></p>
+    <label class="dep-field"><span class="urdu">فہرست کی قسم</span><select id="lstType" class="urdu" onchange="lstTypeChange()"><option value="general">عام فہرست</option><option value="purpose">کس مقصد کے لیے فہرست</option></select></label>
+    <label class="dep-field" id="lstPurposeW" style="display:none;"><span class="urdu">برائے</span><select id="lstPurpose" class="urdu"><option>انتخاب ضلعی مجلس شوری</option><option>انتخاب صوبائی مجلس شوری</option><option>انتخاب مرکزی مجلس شوری</option><option>انتخاب برائے امیر جماعت اسلامی پاکستان</option><option>استصواب مقامی امیر</option><option>استصواب زونل امیر</option><option>استصواب برائے امیر ضلع</option><option>استصواب امیر صوبہ</option></select></label>
     <button class="sheet-btn urdu" onclick="actionShowList()"><span class="ic">📋</span> فہرست دکھائیں</button>
     <button class="sheet-btn urdu" onclick="actionShowPdf()"><span class="ic">📄</span> پی ڈی ایف میں دکھائیں</button>
     <button class="sheet-btn wa urdu" onclick="actionSendWhatsapp()"><span class="ic">📲</span> واٹس ایپ پر بھیجیں</button>
@@ -3724,14 +3737,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 
   function rebuild(){
     Object.values(index).forEach(m=>{
-      m.wasooli = m._base.wasooli; m.baqaya = m._base.baqaya; m.monthly = Object.assign({}, m._base.monthly);
+      m.wasooli = m._base.wasooli; m.baqaya = m._base.baqaya; m.monthly = Object.assign({}, m._base.monthly); m._dep = 0;
+      const fe = (window.__finLatest||{})[m._key];
+      if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
     });
     const seen = new Set();
     server.concat(pending).forEach(d=>{
       if(seen.has(d.id)) return; seen.add(d.id);
       const m = index[d.mkey]; if(!m) return;
       m.monthly[d.month] = (m.monthly[d.month]||0) + d.amount;
-      m.wasooli += d.amount; m.baqaya -= d.amount;
+      m.wasooli += d.amount; m.baqaya -= d.amount; m._dep = (m._dep||0) + d.amount;
     });
     refreshView();
   }
@@ -3758,6 +3773,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       if(window.__onNotifs){ try{ window.__onNotifs(j.notifications); }catch(e){} }
       if(window.__onCands){ try{ window.__onCands(j.candidates); }catch(e){} }
       if(window.__onArkLog){ try{ window.__onArkLog(j.arkLog); }catch(e){} }
+      if(window.__onFin){ try{ window.__onFin(j.finEdits); }catch(e){} }
       server = j.deposits.map(d=>({ id:String(d.id), mkey:d.mkey, month:d.month, amount:Number(d.amount)||0, date:d.date }));
       LS.set('jid_server', server);
       const ids = new Set(server.map(d=>d.id));
@@ -3800,7 +3816,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
 
   window.openDeposit = function(){
-    if(window.__role !== 'admin') return;
+    if(window.__role !== 'admin' || window.__ro) return;
     target = hisabTargetM; if(!target) return;
     $('depTitle').textContent = target.name;
     $('depSub').textContent = 'باقی: ' + fmt(target.baqaya);
@@ -3835,6 +3851,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
 
   window.__api = { url: apiUrl, key: apiKey, sync: syncFromSheet };
+  window.__depRebuild = rebuild;
   rebuild();
   syncFromSheet();
   setInterval(()=>{ if(!document.hidden) syncFromSheet(); }, 60000);
@@ -3851,7 +3868,37 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <button class="sheet-btn urdu" onclick="arkRemove('مستعفی')"><span class="ic">📝</span> مستعفی</button>
     <button class="sheet-btn urdu" onclick="arkRemove('اخراج')"><span class="ic">⛔</span> اخراج</button>
     <button class="sheet-btn urdu" onclick="arkRemove('فوت شد')"><span class="ic">🕊</span> فوت شد</button>
+    <button class="sheet-btn urdu" onclick="arkRemove('حلف نہیں اٹھایا')"><span class="ic">🤝</span> حلف نہیں اٹھایا</button>
     <button class="sheet-cancel urdu" onclick="arkDelClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="finEditOverlay" onclick="if(event.target===this) finEditClose()">
+  <div class="action-sheet" style="max-height:88vh; overflow:auto;">
+    <h4 class="urdu" id="finEditTitle"></h4>
+    <p class="sub urdu">باقی = سابقہ بقایاجات + سالانہ اعانت − کل وصولی (خود حساب ہوگا)</p>
+    <label class="dep-field"><span class="urdu">مقامی امیر</span><input id="fAmeer" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="fContact" type="tel" inputmode="tel"></label>
+    <label class="dep-field"><span class="urdu">سابقہ بقایاجات</span><input id="fSabiqa" type="number" inputmode="numeric" min="0"></label>
+    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت</span><input id="fSaalana" type="number" inputmode="numeric" min="0"></label>
+    <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
+    <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="finEditClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="arkEditOverlay" onclick="if(event.target===this) arkEditClose()">
+  <div class="action-sheet" style="max-height:88vh; overflow:auto;">
+    <h4 class="urdu">رکن کی ترمیم / منتقلی</h4>
+    <label class="dep-field"><span class="urdu">نام</span><input id="eName" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">ولدیت</span><input id="eFather" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="ePhone" type="tel" inputmode="tel"></label>
+    <label class="dep-field"><span class="urdu">زون</span><select id="eZone" class="urdu"></select></label>
+    <label class="dep-field"><span class="urdu">مقام (دوسرے مقام میں منتقل کرنے کے لیے بدلیں)</span><select id="eMuqam" class="urdu"></select></label>
+    <div class="dep-row">
+      <label class="dep-field"><span class="urdu">تاریخ منظوری رکنیت</span><input type="date" id="eSince"></label>
+      <label class="dep-field"><span class="urdu">تبدیلی کی تاریخ</span><input type="date" id="eDate"></label>
+    </div>
+    <button class="sheet-btn dep urdu" onclick="arkEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="arkEditClose()">منسوخ</button>
   </div>
 </div>
 <div id="arkRep" style="display:none; position:fixed; inset:0; z-index:70; overflow:auto; background:var(--paper); padding:14px 14px 40px;">
@@ -3861,7 +3908,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   </div>
   <div class="dep-row">
     <label class="dep-field"><span class="urdu">زون</span><select id="rZone" onchange="renderRep()"></select></label>
-    <label class="dep-field"><span class="urdu">قسم</span><select id="rType" onchange="renderRep()"><option value="all">سب</option><option value="add">نئے اراکین</option><option value="remove">ختم ہونے والے</option></select></label>
+    <label class="dep-field"><span class="urdu">قسم</span><select id="rType" onchange="renderRep()"><option value="all">سب</option><option value="add">نئے اراکین</option><option value="remove">ختم ہونے والے</option><option value="edit">منتقلی / ترمیم</option></select></label>
   </div>
   <div class="dep-row">
     <label class="dep-field"><span class="urdu">مدت</span><select id="rMode" onchange="renderRep()"><option value="all">تمام وقت</option><option value="month">ماہانہ</option><option value="range">تاریخ سے تاریخ</option></select></label>
@@ -4072,7 +4119,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     updateBadge();
   };
   window.sendNotif = async function(){
-    if(window.__role!=='admin') return;
+    if(window.__role!=='admin' || window.__ro) return;
     const text = $('nText').value.trim();
     const file = $('nFile').files[0] || null;
     if(!text){ toast('پہلے پیغام لکھیں'); return; }
@@ -4094,7 +4141,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     });
   };
   function delNotif(id){
-    if(window.__role!=='admin') return;
+    if(window.__role!=='admin' || window.__ro) return;
     if(!confirm('یہ اطلاع حذف کریں؟')) return;
     dels.push(id); LS.set('jid_n_dels', dels);
     pend = pend.filter(n=>n.id!==id); LS.set('jid_n_pend', pend);
@@ -4185,6 +4232,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.candForm = function(){ formOpen = !formOpen; renderCandPage(); if(formOpen) setTimeout(()=>{ const n=$('cName'); if(n) n.focus(); },50); };
   window.candFilter = function(f){ filter = f; renderCandPage(); };
   window.candSave = function(){
+    if(window.__ro) return;
     const name = $('cName').value.trim();
     if(!name){ toast('امیدوار کا نام لکھیں'); return; }
     const now = Date.now(), id = now.toString(36)+Math.random().toString(36).slice(2,6);
@@ -4194,12 +4242,13 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
   window.candStatus = function(id){
     const c = all().find(x=>x.id===id); if(!c || c.status==='approved') return;
-    if(window.__role!=='admin'){ toast('صرف ایڈمن رکن بنا سکتا ہے'); return; }
+    if(window.__role!=='admin' || window.__ro){ toast('صرف سپر ایڈمن رکن بنا سکتا ہے'); return; }
     window.arkAddFromCand(c);
     const n = Object.assign({}, c, {status:'approved', t: Date.now()});
     pend[id] = n; save(); renderCandPage(); post({action:'cand_save', c:n}).then(sync);
   };
   window.candDel = function(id){
+    if(window.__ro) return;
     if(!confirm('اس امیدوار کو حذف کریں؟')) return;
     delete pend[id]; if(dels.indexOf(id)<0) dels.push(id); save(); renderCandPage();
     post({action:'cand_del', id}).then(sync);
@@ -4238,17 +4287,24 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2400); }
 
   function rebuild(){
-    const ev = events();
-    const removed = new Set(ev.filter(e=>e.type==='remove').map(e=>e.key));
-    Object.keys(AR_DATA).forEach(z=>{
-      if(!base[z]) return;
-      base[z].forEach(b=>{ b.g.mem = b.mem.filter(m=>!removed.has(m._key)); });
-      ev.filter(e=>e.type==='add' && e.zone===z).forEach(e=>{
-        const k = 'add:'+e.id; if(removed.has(k)) return;
-        let b = base[z].find(b=>b.g.m===e.muqam);
-        if(!b){ const g={m:e.muqam, mem:[]}; AR_DATA[z].push(g); b={g, mem:[]}; base[z].push(b); }
-        b.g.mem.push({n:e.n, f:e.f||'', c:e.c||'', k:'', d:'', _key:k});
-      });
+    const ev = events(), items = [];
+    Object.keys(base).forEach(z=>base[z].forEach(b=>b.mem.forEach(m=>items.push({m, z, mu:b.g.m, key:m._key}))));
+    ev.forEach(e=>{
+      if(e.type==='add') items.push({m:{n:e.n, f:e.f||'', c:e.c||'', k:'', d:'', s:e.date, _key:'add:'+e.id}, z:e.zone, mu:e.muqam, key:'add:'+e.id});
+      else if(e.type==='remove'){ const i = items.findIndex(x=>x.key===e.key); if(i>-1) items.splice(i,1); }
+      else if(e.type==='edit'){
+        const it = items.find(x=>x.key===e.key); if(!it) return;
+        it.m = Object.assign({}, it.m, {n:e.n, f:e.f||'', c:e.c||''});
+        if(e.x && e.x.s !== undefined) it.m.s = e.x.s;
+        it.z = e.zone; it.mu = e.muqam;
+      }
+    });
+    Object.keys(AR_DATA).forEach(z=>AR_DATA[z].forEach(g=>{ g.mem = []; }));
+    items.forEach(it=>{
+      if(!AR_DATA[it.z]) return;
+      let g = AR_DATA[it.z].find(g=>g.m===it.mu);
+      if(!g){ g = {m:it.mu, mem:[]}; AR_DATA[it.z].push(g); }
+      g.mem.push(it.m);
     });
     renderAll();
     if($('arkanDetail').classList.contains('open') && lastG) openArkanDetail(lastG);
@@ -4257,7 +4313,8 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.__onArkLog = function(list){
     if(!Array.isArray(list)) return;
     server = list.map(e=>({id:String(e.id), type:String(e.type), reason:String(e.reason||''), zone:String(e.zone), muqam:String(e.muqam||''),
-      n:String(e.n||''), f:String(e.f||''), c:String(e.c||''), key:String(e.key||''), date:String(e.date||''), t:Number(e.t)||0}));
+      n:String(e.n||''), f:String(e.f||''), c:String(e.c||''), key:String(e.key||''), date:String(e.date||''), t:Number(e.t)||0,
+      x:(function(v){ try{ return typeof v==='string' ? JSON.parse(v||'{}') : (v||{}); }catch(_){ return {}; } })(e.x)}));
     const ids = new Set(server.map(e=>e.id));
     Object.keys(pend).forEach(id=>{ if(ids.has(id)) delete pend[id]; });
     save(); Object.keys(pend).forEach(id=>post(pend[id])); rebuild();
@@ -4277,18 +4334,54 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   const _open = window.openArkanDetail;
   window.openArkanDetail = function(g){
     lastG = g; _open(g);
-    if(window.__role!=='admin') return;
+    if(window.__role!=='admin' || window.__ro) return;
     document.querySelectorAll('#adArkanNames li').forEach((li,i)=>{
       const m = g.mem[i]; if(!m) return;
       const b = document.createElement('button');
       b.textContent = '🗑'; b.style.cssText = 'border:none;background:none;font-size:20px;color:var(--danger);cursor:pointer;';
+      const eb = document.createElement('button');
+      eb.textContent = '✏️'; eb.style.cssText = 'border:none;background:none;font-size:20px;cursor:pointer;';
+      eb.onclick = ev=>{ ev.stopPropagation(); curG = g; curM = m; arkEditOpen(); };
+      li.appendChild(eb);
       b.onclick = ev=>{ ev.stopPropagation(); curG = g; curM = m; $('arkDelTitle').textContent = m.n + ' کو فہرست سے ہٹائیں'; $('arkDelDate').value = today(); $('arkDelOverlay').classList.add('open'); };
       li.appendChild(b);
     });
   };
+
+  // رکن کی ترمیم / دوسرے مقام یا زون میں منتقلی (صرف سپر ایڈمن)
+  function muqamNames(z){
+    const set = {}; (DATA.zones.find(x=>x.id===z)||{muqamat:[]}).muqamat.forEach(m=>set[m.name]=1);
+    (AR_DATA[z]||[]).forEach(g=>set[g.m]=1); return Object.keys(set);
+  }
+  function fillMuqam(z, sel){
+    $('eMuqam').innerHTML = muqamNames(z).map(n=>'<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>').join('');
+  }
+  window.arkEditOpen = function(){
+    if(window.__ro || !curG || !curM) return;
+    const z = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(curG)>-1);
+    $('eName').value = curM.n||''; $('eFather').value = curM.f||''; $('ePhone').value = curM.c||'';
+    $('eZone').innerHTML = DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===z?' selected':'')+'>'+esc(x.name)+'</option>').join('');
+    fillMuqam(z, curG.m);
+    $('eZone').onchange = ()=>fillMuqam($('eZone').value, '');
+    $('eSince').value = curM.s || ''; $('eDate').value = today();
+    $('arkEditOverlay').classList.add('open');
+  };
+  window.arkEditClose = function(){ $('arkEditOverlay').classList.remove('open'); };
+  window.arkEditSave = function(){
+    if(window.__ro || !curG || !curM) return;
+    const oz = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(curG)>-1);
+    const n = $('eName').value.trim(); if(!n){ toast('نام لکھیں'); return; }
+    const nz = $('eZone').value, nm = $('eMuqam').value, f = $('eFather').value.trim(), c = $('ePhone').value.trim(), s0 = $('eSince').value;
+    const moved = (nz!==oz || nm!==curG.m);
+    if(!moved && n===curM.n && f===(curM.f||'') && c===(curM.c||'') && s0===(curM.s||'')){ toast('کوئی تبدیلی نہیں کی'); return; }
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'edit', reason:moved?'منتقلی':'ترمیم', zone:nz, muqam:nm, n, f, c, key:curM._key,
+      date:$('eDate').value||today(), t:now, x:{s:s0, from: moved ? curG.m+' — '+zname(oz) : ''}});
+    arkEditClose(); toast(moved ? 'رکن منتقل ہو گیا ✓' : 'ترمیم محفوظ ہو گئی ✓');
+  };
   window.arkDelClose = function(){ $('arkDelOverlay').classList.remove('open'); };
   window.arkRemove = function(reason){
-    if(!curG || !curM) return;
+    if(!curG || !curM || window.__ro) return;
     const z = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(curG)>-1);
     const now = Date.now();
     addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'remove', reason, zone:z, muqam:curG.m, n:curM.n, f:curM.f||'', c:curM.c||'', key:curM._key, date:$('arkDelDate').value||today(), t:now});
@@ -4318,15 +4411,135 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     l.sort((a,b)=> b.date.localeCompare(a.date) || b.t-a.t);
     const cnt = r=>l.filter(e=>e.reason===r).length, nAdd = l.filter(e=>e.type==='add').length;
     const months = {};
-    l.forEach(e=>{ const k=e.date.slice(0,7)||'—'; (months[k]=months[k]||{a:0,r:0,x:0,d:0});
-      if(e.type==='add') months[k].a++; else if(e.reason==='مستعفی') months[k].r++; else if(e.reason==='اخراج') months[k].x++; else months[k].d++; });
-    const rows = Object.keys(months).sort().reverse().map(k=>'<tr><td style="direction:ltr">'+k+'</td><td>'+months[k].a+'</td><td>'+months[k].r+'</td><td>'+months[k].x+'</td><td>'+months[k].d+'</td></tr>').join('');
+    l.forEach(e=>{ if(e.type==='edit') return; const k=e.date.slice(0,7)||'—'; (months[k]=months[k]||{a:0,r:0,x:0,d:0,h:0});
+      if(e.type==='add') months[k].a++; else if(e.reason==='مستعفی') months[k].r++; else if(e.reason==='اخراج') months[k].x++; else if(e.reason==='فوت شد') months[k].d++; else months[k].h++; });
+    const rows = Object.keys(months).sort().reverse().map(k=>'<tr><td style="direction:ltr">'+k+'</td><td>'+months[k].a+'</td><td>'+months[k].r+'</td><td>'+months[k].x+'</td><td>'+months[k].d+'</td><td>'+months[k].h+'</td></tr>').join('');
     const cls = e=> e.type==='add' ? 'ok' : '';
-    $('rBody').innerHTML = '<div class="cand-sum urdu"><div><b>'+nAdd+'</b><span>نئے رکن</span></div><div><b>'+cnt('مستعفی')+'</b><span>مستعفی</span></div><div><b>'+cnt('اخراج')+'</b><span>اخراج</span></div><div><b>'+cnt('فوت شد')+'</b><span>فوت شد</span></div></div>'
-      + (rows ? '<div style="overflow-x:auto;"><table class="fin-table urdu" style="margin-bottom:12px;text-align:center;"><tr><td>مہینہ</td><td>شامل</td><td>مستعفی</td><td>اخراج</td><td>فوت</td></tr>'+rows+'</table></div>' : '')
-      + (l.map(e=>'<div class="cand-card"><div class="cand-top"><div><div class="cand-name urdu">'+esc(e.n)+'</div><div class="cand-sub urdu">'+esc(e.muqam)+' — '+esc(zname(e.zone))+'</div></div><span class="cand-badge urdu '+cls(e)+'">'+(e.type==='add'?'✅ ':'')+esc(e.reason)+'</span></div><div class="cand-sub" style="direction:ltr;text-align:left;margin-top:6px;">'+esc(e.date)+(e.c?' • '+esc(e.c):'')+'</div></div>').join('') || '<div class="n-empty urdu">اس فلٹر میں کوئی ریکارڈ نہیں</div>');
+    $('rBody').innerHTML = '<div class="cand-sum urdu"><div><b>'+nAdd+'</b><span>نئے رکن</span></div><div><b>'+cnt('مستعفی')+'</b><span>مستعفی</span></div><div><b>'+cnt('اخراج')+'</b><span>اخراج</span></div><div><b>'+cnt('فوت شد')+'</b><span>فوت شد</span></div><div><b>'+cnt('حلف نہیں اٹھایا')+'</b><span>حلف نہیں اٹھایا</span></div></div>'
+      + (rows ? '<div style="overflow-x:auto;"><table class="fin-table urdu" style="margin-bottom:12px;text-align:center;"><tr><td>مہینہ</td><td>شامل</td><td>مستعفی</td><td>اخراج</td><td>فوت</td><td>حلف نہیں</td></tr>'+rows+'</table></div>' : '')
+      + (l.map(e=>'<div class="cand-card"><div class="cand-top"><div><div class="cand-name urdu">'+esc(e.n)+'</div><div class="cand-sub urdu">'+esc(e.muqam)+' — '+esc(zname(e.zone))+'</div></div><span class="cand-badge urdu '+cls(e)+'">'+(e.type==='add'?'✅ ':'')+esc(e.reason)+'</span></div><div class="cand-sub" style="direction:ltr;text-align:left;margin-top:6px;">'+esc(e.date)+(e.c?' • '+esc(e.c):'')+'</div>'+(e.x&&e.x.from?'<div class="cand-sub urdu" style="margin-top:4px;">پہلے: '+esc(e.x.from)+'</div>':'')+'</div>').join('') || '<div class="n-empty urdu">اس فلٹر میں کوئی ریکارڈ نہیں</div>');
   };
   if(Object.keys(pend).length || server.length) rebuild();
+})();
+</script>
+<script>
+// ================== فہرست ارکان: عام / مقصد کے مطابق (دستخط + 90 دن کی شرط) ==================
+function lstTypeChange(){ document.getElementById('lstPurposeW').style.display = document.getElementById('lstType').value==='purpose' ? 'block':'none'; }
+window.buildPrintHTML = function(g){
+  const zid = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(g)>-1);
+  const zn = (DATA.zones.find(z=>z.id===zid)||{}).name || '';
+  const purpose = document.getElementById('lstType').value==='purpose' ? document.getElementById('lstPurpose').value : '';
+  const now = Date.now();
+  // منظوری کی تاریخ سے 90 دن پورے نہ ہوئے ہوں تو استصواب/انتخاب کے لیے اہل نہیں
+  const short = a => a.s && Math.floor((now - new Date(a.s+'T00:00:00').getTime())/86400000) < 90;
+  const rows = g.mem.map((a,i)=>{
+    const kv = (purpose && short(a)) ? 'استصواب یا انتخاب کے لئے وقت پورا نہیں ہے۔' : (a.k||'-');
+    return `<tr><td>${i+1}</td><td>${a.d||'-'}</td><td>${a.n}</td><td>${a.f||'-'}</td><td class="ltr">${a.c||'-'}</td><td class="urdu">${kv}</td>${purpose?'<td style="min-width:90px;"></td>':''}</tr>`;
+  }).join('');
+  const N = purpose ? 7 : 6, cs = 'style="font-size:16px;border:none;background:#fff;color:#0f4c4a;"';
+  return `<table><thead>
+    <tr><th colspan="${N}" class="urdu" ${cs}>فہرست ارکان جماعت اسلامی ضلع دیر پائین</th></tr>
+    <tr><th colspan="${N}" class="urdu" ${cs}>مقام: ${g.m} &nbsp;&nbsp;&nbsp; زون: ${zn}${purpose?' &nbsp;&nbsp;&nbsp; برائے: '+purpose:''}</th></tr>
+    <tr><th class="urdu">نمبر شمار</th><th class="urdu">سلسلہ نمبر</th><th class="urdu">نام رکن</th><th class="urdu">ولدیت</th><th class="urdu">رابطہ نمبر</th><th class="urdu">کیفیت</th>${purpose?'<th class="urdu">دستخط</th>':''}</tr></thead>
+    <tbody>${rows}</tbody></table>`;
+};
+</script>
+<script>
+// PDF بنانے سے پہلے فونٹ لوڈ ہونے کا انتظار
+(function(){
+  window.generatePdfBlob = async function(g){
+    try{ await document.fonts.load('14px "Jameel Noori Nastaleeq"'); await document.fonts.ready; }catch(e){}
+    const el = document.getElementById('printSheet');
+    el.innerHTML = buildPrintHTML(g);
+    const oldW = el.style.width, oldB = el.style.boxSizing;
+    el.style.width = '794px'; el.style.boxSizing = 'border-box';          // A4 چوڑائی (96dpi)
+    const top = el.getBoundingClientRect().top;
+    const rowEnds = Array.prototype.map.call(el.querySelectorAll('tr'), tr=>(tr.getBoundingClientRect().bottom - top)*2);
+    const heads = el.querySelectorAll('thead tr');
+    const headPx = Math.ceil((heads[heads.length-1].getBoundingClientRect().bottom - top)*2);   // عنوان + کالم ہیڈنگ کی اونچائی
+    const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff', width:794, windowWidth:794});
+    el.style.width = oldW; el.style.boxSizing = oldB;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','pt','a4');
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), M = 24;
+    const k = pw / canvas.width, pagePx = Math.floor((ph - 2*M) / k);
+    let y = 0, first = true;
+    while(y < canvas.height - 2){
+      const cap = first ? pagePx : pagePx - headPx;
+      let cut = Math.min(canvas.height, y + cap);
+      if(cut < canvas.height){
+        const fit = rowEnds.filter(v=>v > y + 40 && v <= cut);          // صفحہ قطار کے آخر پر ٹوٹے
+        if(fit.length) cut = Math.floor(fit[fit.length-1]);
+      }
+      const off = first ? 0 : headPx;
+      const part = document.createElement('canvas');
+      part.width = canvas.width; part.height = off + (cut - y);
+      const ctx = part.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,part.width,part.height);
+      if(!first) ctx.drawImage(canvas, 0, 0, canvas.width, headPx, 0, 0, canvas.width, headPx);   // ہر صفحے پر ہیڈر
+      ctx.drawImage(canvas, 0, y, canvas.width, cut - y, 0, off, canvas.width, cut - y);
+      if(!first) pdf.addPage();
+      pdf.addImage(part.toDataURL('image/png'), 'PNG', 0, M, pw, part.height * k);
+      first = false; y = cut;
+    }
+    return pdf.output('blob');
+  };
+})();
+</script>
+<script>
+// ================== مالیاتی ریکارڈ میں ترمیم (صرف سپر ایڈمن) ==================
+(function(){
+  const mem = {};
+  const LS = {
+    get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){ return mem[k]!==undefined?mem[k]:d; } },
+    set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){ mem[k]=v; } }
+  };
+  const $ = id=>document.getElementById(id);
+  const today = ()=>{ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); };
+  let server = LS.get('jid_f_server', []), pend = LS.get('jid_f_pend', {});
+  function latest(){
+    const map = {}; server.forEach(e=>map[e.id]=e); Object.keys(pend).forEach(id=>map[id]=pend[id]);
+    const best = {}; Object.keys(map).forEach(id=>{ const e=map[id]; if(!best[e.mkey] || e.t>best[e.mkey].t) best[e.mkey]=e; });
+    return best;
+  }
+  function save(){ LS.set('jid_f_server',server); LS.set('jid_f_pend',pend); }
+  function apply(){ window.__finLatest = latest(); if(window.__depRebuild) window.__depRebuild(); }
+  function post(e){
+    const api = window.__api; if(!api || !api.url()) return Promise.resolve();
+    return fetch(api.url(), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({key:api.key(), action:'fin_set', e})}).catch(()=>{});
+  }
+  function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2400); }
+
+  window.__onFin = function(list){
+    if(!Array.isArray(list)) return;
+    server = list.map(e=>({id:String(e.id), mkey:String(e.mkey), ameer:String(e.ameer||''), contact:String(e.contact||''),
+      sabiqa:Number(e.sabiqa)||0, saalana:Number(e.saalana)||0, wasooli:Number(e.wasooli)||0, t:Number(e.t)||0}));
+    const ids = new Set(server.map(e=>e.id));
+    Object.keys(pend).forEach(id=>{ if(ids.has(id)) delete pend[id]; });
+    save(); Object.keys(pend).forEach(id=>post(pend[id])); apply();
+  };
+  let target = null;
+  window.finEditOpen = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    target = hisabTargetM; if(!target) return;
+    $('finEditTitle').textContent = target.name + ' — مالیاتی ریکارڈ';
+    $('fAmeer').value = target.ameer||''; $('fContact').value = target.contact||'';
+    $('fSabiqa').value = target.sabiqa||0; $('fSaalana').value = target.saalana||0; $('fWasooli').value = target.wasooli||0;
+    $('finEditOverlay').classList.add('open');
+  };
+  window.finEditClose = function(){ $('finEditOverlay').classList.remove('open'); };
+  window.finEditSave = function(){
+    if(window.__role!=='admin' || window.__ro || !target) return;
+    const n = id=>Math.max(0, Math.round(Number($(id).value)||0));
+    const now = Date.now();
+    // ایپ سے جمع شدہ رقمیں الگ شمار ہوتی ہیں؛ بنیادی وصولی = درج کی گئی کل وصولی − ایپ کی جمع رقمیں
+    const e = {id:now.toString(36)+Math.random().toString(36).slice(2,5), mkey:target._key, zone:target._zone.id, zoneName:target._zone.name, muqam:target.name,
+      ameer:$('fAmeer').value.trim(), contact:$('fContact').value.trim(), sabiqa:n('fSabiqa'), saalana:n('fSaalana'),
+      wasooli: n('fWasooli') - (target._dep||0), date:today(), t:now};
+    pend[e.id] = e; save(); finEditClose(); apply(); toast('مالیاتی ریکارڈ محفوظ ہو گیا ✓');
+    post(e).then(()=>{ if(window.__api) setTimeout(window.__api.sync, 3000); });
+  };
+  if(Object.keys(pend).length || server.length) apply();
 })();
 </script>
 <script>
@@ -4361,6 +4574,8 @@ const USERS = [
   {u:"samarbagh", h:"1067eac57935c1006d90c8cbd8d388bf4b086da4315c1bd8d9fd512fc5dfab1f", role:"zone", zone:"z6", label:"ثمرباغ زون"},
   {u:"munda", h:"dc2de6abe3a591f9be08987a5c52bafca5fbc72d7057e6bf7c8c9d3f36d24d83", role:"zone", zone:"z7", label:"منڈا زون"},
   {u:"khall", h:"95413958e419a4f30248a4ed90f52aef4bc34ecc8b826a44862b7271e7ae6cbe", role:"zone", zone:"z8", label:"خال زون"},
+  {u:"viewer1", h:"175a008ad27b6426ee48f07d7ca1998943cb7a3934d0dbe66fe8e00be1f02846", role:"viewer", zone:"", label:"ایڈمن (صرف دیکھنے کا اختیار)"},
+  {u:"viewer2", h:"923e9b64d5fe54309b19ca71a05047469a4e6cc9687566c993493495cd4c40c0", role:"viewer", zone:"", label:"ایڈمن (صرف دیکھنے کا اختیار)"},
 ];
 
 function sha256(str){
@@ -4398,10 +4613,11 @@ function sha256(str){
   function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 
   function applyUser(u, fresh){
-    window.__role = u.role; window.__zone = u.zone || null; window.__user = u.u;
+    window.__role = (u.role==='viewer') ? 'admin' : u.role; window.__ro = (u.role==='viewer'); window.__zone = u.zone || null; window.__user = u.u;
     document.body.classList.remove('locked');
     document.body.classList.add('authed');
     document.body.classList.toggle('role-zone', u.role==='zone');
+    document.body.classList.toggle('ro', u.role==='viewer');
     $('loginOverlay').classList.remove('open');
     if(u.role==='zone'){
       // دوسرے زونز کا ڈیٹا اس سیشن سے ہٹا دیں
