@@ -215,7 +215,8 @@ body.locked{overflow:hidden;}
 .login-card label{display:block; text-align:right; font-size:12px; color:var(--muted); margin:0 0 4px;}
 .login-card input{width:100%; box-sizing:border-box; padding:13px 12px; margin-bottom:12px; border-radius:12px; border:1px solid var(--line); background:#fff; color:#111; font-size:16px; direction:ltr; text-align:left; font-family:'Inter',sans-serif;}
 .login-card .pw-wrap{position:relative;}
-.login-card .pw-wrap button{position:absolute; left:8px; top:8px; border:none; background:none; font-size:18px; cursor:pointer;}
+.login-card .pw-wrap input{padding-right:48px;}
+.login-card .pw-wrap button{position:absolute; right:6px; left:auto; top:4px; width:40px; height:40px; border:none; background:none; font-size:20px; cursor:pointer; z-index:2;}
 .login-btn{width:100%; padding:14px; border:none; border-radius:12px; background:var(--teal-deep); color:#fff; font-size:17px; cursor:pointer;}
 .login-err{color:var(--danger); font-size:13px; min-height:18px; margin:0 0 10px;}
 #welcomeOverlay{position:fixed; inset:0; z-index:99; background:linear-gradient(160deg,var(--teal-deep) 0%, #0b2b2a 100%); color:#fdfcf8; display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:24px;}
@@ -262,11 +263,11 @@ html.typing header, html.typing #newsTicker, html.typing #tabsBar, html.typing .
 }
 
 /* ===== خوبصورت انٹرفیس ===== */
-header{background:linear-gradient(135deg,#072a28 0%,#0f5a56 62%,#1a8077 130%) !important; box-shadow:0 6px 20px rgba(7,42,40,.35); border-radius:0 0 22px 22px; border-bottom:3px solid var(--gold);}
+header{background:linear-gradient(135deg,var(--hd1) 0%,var(--hd2) 62%,var(--hd3) 130%) !important; box-shadow:0 6px 20px rgba(7,42,40,.35); border-radius:0 0 22px 22px; border-bottom:3px solid var(--gold);}
 .tab-btn{border-radius:14px; transition:all .2s; box-shadow:0 1px 3px rgba(0,0,0,.08);}
-.tab-btn.active{background:linear-gradient(135deg,var(--teal),#1c8a80) !important; color:#fff !important; box-shadow:0 6px 14px rgba(15,76,74,.35); transform:translateY(-1px);}
+.tab-btn.active{background:linear-gradient(135deg,var(--hd2),var(--acc2)) !important; color:#fff !important; box-shadow:0 6px 14px rgba(15,76,74,.35); transform:translateY(-1px);}
 .zone-chip{border-radius:22px; box-shadow:0 1px 3px rgba(0,0,0,.08);}
-.zone-chip.active{background:linear-gradient(135deg,var(--teal),#1c8a80) !important; color:#fff !important; box-shadow:0 4px 10px rgba(15,76,74,.3);}
+.zone-chip.active{background:linear-gradient(135deg,var(--hd2),var(--acc2)) !important; color:#fff !important; box-shadow:0 4px 10px rgba(15,76,74,.3);}
 .m-card,.zone-ameer,.ameer-card,.arkan-count-card,.n-item,.dash-card,.cand-card{border-radius:16px !important; box-shadow:0 2px 10px rgba(20,40,40,.09); transition:transform .15s, box-shadow .15s;}
 .m-card:active,.cand-card:active{transform:scale(.985);}
 .zone-summary .box{border-radius:14px; box-shadow:0 2px 8px rgba(20,40,40,.08);}
@@ -314,6 +315,26 @@ body.ro .sheet-btn.dep:not(#arkRepBtn), body.ro .n-composer, body.ro .n-del, bod
 }
 #printSheet thead{display:table-header-group;}
 #printSheet tr{page-break-inside:avoid;}
+
+/* ===== تھیمز ===== */
+:root{--hd1:#072a28; --hd2:#0f5a56; --hd3:#1a8077; --acc2:#1c8a80;}
+:root[data-pal="blue"]{--teal:#1d4f91; --teal-deep:#0f2f5c; --gold:#d9a441; --hd1:#0b2547; --hd2:#1d4f91; --hd3:#2f7bd0; --acc2:#2f7bd0;}
+:root[data-pal="purple"]{--teal:#5b3a8e; --teal-deep:#34205a; --gold:#e0b04a; --hd1:#2a1650; --hd2:#5b3a8e; --hd3:#8458c4; --acc2:#8458c4;}
+:root[data-pal="brown"]{--teal:#7a4a21; --teal-deep:#4b2a10; --gold:#d6a34a; --hd1:#3b210c; --hd2:#7a4a21; --hd3:#b0733a; --acc2:#b0733a;}
+:root[data-pal="rose"]{--teal:#9b2c4f; --teal-deep:#5e1530; --gold:#e3b05c; --hd1:#4a1126; --hd2:#9b2c4f; --hd3:#d0517a; --acc2:#d0517a;}
+:root[data-theme="dark"][data-pal="blue"]{--teal:#8db8f0;}
+:root[data-theme="dark"][data-pal="purple"]{--teal:#c3a6f0;}
+:root[data-theme="dark"][data-pal="brown"]{--teal:#e0b48a;}
+:root[data-theme="dark"][data-pal="rose"]{--teal:#f0a0b8;}
+#themeBtn{margin:6px 6px 0 0; padding:3px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.5); background:rgba(0,0,0,.18); color:#fff; font-size:12px; cursor:pointer; display:none;}
+body.authed #themeBtn{display:inline-block;}
+.th-row{display:flex; gap:8px; margin:6px 0 14px;}
+.th-row button{flex:1; padding:10px 4px; border-radius:12px; border:2px solid var(--line); background:var(--panel); color:var(--ink); font-size:14px; cursor:pointer;}
+.th-row button.on{border-color:var(--gold); font-weight:700;}
+.th-sw{display:flex; gap:12px; justify-content:center; margin:8px 0 6px; flex-wrap:wrap;}
+.th-sw button{width:44px; height:44px; border-radius:50%; border:3px solid transparent; cursor:pointer;}
+.th-sw button.on{border-color:var(--ink); box-shadow:0 0 0 2px var(--paper) inset;}
+.cand-sum{flex-wrap:wrap;} .cand-sum div{min-width:30%;}
 </style>
 </head>
 <body>
@@ -323,6 +344,7 @@ body.ro .sheet-btn.dep:not(#arkRepBtn), body.ro .n-composer, body.ro .n-del, bod
     <h1 class="urdu">جماعت اسلامی ضلع دیر پائین</h1>
     <p>Zones → Muqamat → Hisab Kitab / Arkan</p>
     <button id="logoutBtn" class="urdu" onclick="doLogout()">🚪 لاگ آؤٹ</button>
+    <button id="themeBtn" class="urdu" onclick="openTheme()">🎨 تھیم</button>
     <button id="installBtn2" class="urdu" onclick="installApp()" style="display:none; margin:6px 6px 0 0; padding:3px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(0,0,0,.18); color:#ffe9a8; font-size:12px; cursor:pointer;">📲 انسٹال کریں</button>
   </div>
   <div class="badges">
@@ -3737,6 +3759,21 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     m._base = { wasooli:m.wasooli||0, baqaya:m.baqaya||0, monthly:Object.assign({}, m.monthly||{}) };
   }));
 
+
+  // مالیاتی مقام ↔ ارکان کی فہرست کا گروپ: ناموں کی مشابہت سے ہر زون میں ایک ایک جوڑا
+  (function(){
+    const nz = t=>String(t||'').replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ةھهۃ]/g,'ہ').replace(/[ٸئۓے]/g,'ی').replace(/[\u064B-\u065F\u0621\u0654]/g,'').replace(/[^\u0600-\u06FFa-z0-9]/gi,'').replace(/[\u060C\u061B\u061F\u06D4]/g,'');
+    const bg = t=>{ const a=nz(t), m={}; for(let i=0;i<a.length-1;i++){ const k=a.substr(i,2); m[k]=(m[k]||0)+1; } return {m, n:Math.max(a.length-1,0)}; };
+    const dice = (x,y)=>{ if(!x.n||!y.n) return 0; let c=0; for(const k in x.m) if(y.m[k]) c+=Math.min(x.m[k],y.m[k]); return 2*c/(x.n+y.n); };
+    window.__link = {};
+    DATA.zones.forEach(z=>{
+      const gs = (AR_DATA[z.id]||[]).map(g=>({g, b:bg(g.m)})), ms = z.muqamat.map(m=>({m, b:bg(m.name)})), pr = [];
+      ms.forEach((a,i)=>gs.forEach((c,j)=>{ const cn = Math.max(a.m.arkan||0, c.g.mem.length)||1; pr.push([dice(a.b,c.b) + 0.05*(1-Math.abs((a.m.arkan||0)-c.g.mem.length)/cn), i, j]); }));
+      pr.sort((p,q)=>q[0]-p[0]);
+      const ui = {}, uj = {}; window.__link[z.id] = {};
+      pr.forEach(([sc,i,j])=>{ if(ui[i]||uj[j]) return; ui[i]=uj[j]=1; ms[i].m._g = gs[j].g; ms[i].m._lk = sc; window.__link[z.id][ms[i].m.name] = gs[j].g.m; });
+    });
+  })();
   let server = LS.get('jid_server', []);    // شیٹ سے آئی جمع رقمیں
   let pending = LS.get('jid_pending', []);  // جو ابھی شیٹ تک نہیں پہنچیں
 
@@ -3745,7 +3782,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       m.wasooli = m._base.wasooli; m.baqaya = m._base.baqaya; m.monthly = Object.assign({}, m._base.monthly); m._dep = 0;
       const fe = (window.__finLatest||{})[m._key];
       if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
-      { const grp = (AR_DATA[m._zone.id]||[]).find(g=>g.m===m.name), cnt = grp ? grp.mem.length : (m.arkan||0);
+      { const grp = m._g, cnt = grp ? grp.mem.length : (m.arkan||0);
         if(grp) m.arkan = cnt; m.saalana = cnt * 4800; m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
     });
     const seen = new Set();
@@ -3876,6 +3913,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <button class="sheet-btn urdu" onclick="arkRemove('اخراج')"><span class="ic">⛔</span> اخراج</button>
     <button class="sheet-btn urdu" onclick="arkRemove('فوت شد')"><span class="ic">🕊</span> فوت شد</button>
     <button class="sheet-btn urdu" onclick="arkRemove('حلف نہیں اٹھایا')"><span class="ic">🤝</span> حلف نہیں اٹھایا</button>
+    <button class="sheet-btn urdu" onclick="arkRemove('منتقل')"><span class="ic">🔁</span> منتقل</button>
     <button class="sheet-cancel urdu" onclick="arkDelClose()">منسوخ</button>
   </div>
 </div>
@@ -3940,6 +3978,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   </div>
   <div id="rBody"></div>
 </div>
+<div class="sheet-overlay" id="themeOverlay" onclick="if(event.target===this) closeTheme()">
+  <div class="action-sheet">
+    <h4 class="urdu">🎨 ایپ کا تھیم</h4>
+    <p class="sub urdu">روشنی</p>
+    <div class="th-row urdu" id="thMode"></div>
+    <p class="sub urdu">رنگ</p>
+    <div class="th-sw" id="thPal"></div>
+    <button class="sheet-cancel urdu" onclick="closeTheme()">بند کریں</button>
+  </div>
+</div>
 <div id="loginOverlay">
   <div class="login-card">
     <h2 class="urdu">جماعت اسلامی ضلع دیر پائین</h2>
@@ -3949,7 +3997,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="urdu">پاس ورڈ</label>
     <div class="pw-wrap">
       <input id="loginPass" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false">
-      <button type="button" onclick="var i=document.getElementById('loginPass'); i.type = i.type==='password'?'text':'password';">👁</button>
+      <button type="button" id="pwEye" aria-label="پاس ورڈ دکھائیں" onclick="togglePw()">👁</button>
     </div>
     <p class="login-err urdu" id="loginErr"></p>
     <button class="login-btn urdu" onclick="doLogin()">لاگ ان</button>
@@ -4324,6 +4372,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     items.forEach(it=>{
       if(!AR_DATA[it.z]) return;
       let g = AR_DATA[it.z].find(g=>g.m===it.mu);
+      if(!g && window.__link && window.__link[it.z] && window.__link[it.z][it.mu]) g = AR_DATA[it.z].find(x=>x.m===window.__link[it.z][it.mu]);
       if(!g){ g = {m:it.mu, mem:[]}; AR_DATA[it.z].push(g); }
       g.mem.push(it.m);
     });
@@ -4374,10 +4423,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
 
   // رکن کی ترمیم / دوسرے مقام یا زون میں منتقلی (صرف سپر ایڈمن)
-  function muqamNames(z){
-    const set = {}; (DATA.zones.find(x=>x.id===z)||{muqamat:[]}).muqamat.forEach(m=>set[m.name]=1);
-    (AR_DATA[z]||[]).forEach(g=>set[g.m]=1); return Object.keys(set);
-  }
+  function muqamNames(z){ return (AR_DATA[z]||[]).map(g=>g.m); }
   function fillMuqam(z, sel){
     $('eMuqam').innerHTML = muqamNames(z).map(n=>'<option'+(n===sel?' selected':'')+'>'+esc(n)+'</option>').join('');
   }
@@ -4451,12 +4497,12 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     l.sort((a,b)=> b.date.localeCompare(a.date) || b.t-a.t);
     const cnt = r=>l.filter(e=>e.reason===r).length, nAdd = l.filter(e=>e.type==='add').length;
     const months = {};
-    l.forEach(e=>{ if(e.type==='edit') return; const k=e.date.slice(0,7)||'—'; (months[k]=months[k]||{a:0,r:0,x:0,d:0,h:0});
-      if(e.type==='add') months[k].a++; else if(e.reason==='مستعفی') months[k].r++; else if(e.reason==='اخراج') months[k].x++; else if(e.reason==='فوت شد') months[k].d++; else months[k].h++; });
-    const rows = Object.keys(months).sort().reverse().map(k=>'<tr><td style="direction:ltr">'+k+'</td><td>'+months[k].a+'</td><td>'+months[k].r+'</td><td>'+months[k].x+'</td><td>'+months[k].d+'</td><td>'+months[k].h+'</td></tr>').join('');
+    l.forEach(e=>{ if(e.type==='edit') return; const k=e.date.slice(0,7)||'—'; (months[k]=months[k]||{a:0,r:0,x:0,d:0,h:0,m:0});
+      if(e.type==='add') months[k].a++; else if(e.reason==='مستعفی') months[k].r++; else if(e.reason==='اخراج') months[k].x++; else if(e.reason==='فوت شد') months[k].d++; else if(e.reason==='منتقل') months[k].m++; else months[k].h++; });
+    const rows = Object.keys(months).sort().reverse().map(k=>'<tr><td style="direction:ltr">'+k+'</td><td>'+months[k].a+'</td><td>'+months[k].r+'</td><td>'+months[k].x+'</td><td>'+months[k].d+'</td><td>'+months[k].h+'</td><td>'+months[k].m+'</td></tr>').join('');
     const cls = e=> e.type==='add' ? 'ok' : '';
-    $('rBody').innerHTML = '<div class="cand-sum urdu"><div><b>'+nAdd+'</b><span>نئے رکن</span></div><div><b>'+cnt('مستعفی')+'</b><span>مستعفی</span></div><div><b>'+cnt('اخراج')+'</b><span>اخراج</span></div><div><b>'+cnt('فوت شد')+'</b><span>فوت شد</span></div><div><b>'+cnt('حلف نہیں اٹھایا')+'</b><span>حلف نہیں اٹھایا</span></div></div>'
-      + (rows ? '<div style="overflow-x:auto;"><table class="fin-table urdu" style="margin-bottom:12px;text-align:center;"><tr><td>مہینہ</td><td>شامل</td><td>مستعفی</td><td>اخراج</td><td>فوت</td><td>حلف نہیں</td></tr>'+rows+'</table></div>' : '')
+    $('rBody').innerHTML = '<div class="cand-sum urdu"><div><b>'+nAdd+'</b><span>نئے رکن</span></div><div><b>'+cnt('مستعفی')+'</b><span>مستعفی</span></div><div><b>'+cnt('اخراج')+'</b><span>اخراج</span></div><div><b>'+cnt('فوت شد')+'</b><span>فوت شد</span></div><div><b>'+cnt('حلف نہیں اٹھایا')+'</b><span>حلف نہیں اٹھایا</span></div><div><b>'+cnt('منتقل')+'</b><span>منتقل</span></div></div>'
+      + (rows ? '<div style="overflow-x:auto;"><table class="fin-table urdu" style="margin-bottom:12px;text-align:center;"><tr><td>مہینہ</td><td>شامل</td><td>مستعفی</td><td>اخراج</td><td>فوت</td><td>حلف نہیں</td><td>منتقل</td></tr>'+rows+'</table></div>' : '')
       + (l.map(e=>'<div class="cand-card"><div class="cand-top"><div><div class="cand-name urdu">'+esc(e.n)+'</div><div class="cand-sub urdu">'+esc(e.muqam)+' — '+esc(zname(e.zone))+'</div></div><span class="cand-badge urdu '+cls(e)+'">'+(e.type==='add'?'✅ ':'')+esc(e.reason)+'</span></div><div class="cand-sub" style="direction:ltr;text-align:left;margin-top:6px;">'+esc(e.date)+(e.c?' • '+esc(e.c):'')+'</div>'+(e.x&&e.x.from?'<div class="cand-sub urdu" style="margin-top:4px;">پہلے: '+esc(e.x.from)+'</div>':'')+'</div>').join('') || '<div class="n-empty urdu">اس فلٹر میں کوئی ریکارڈ نہیں</div>');
   };
   rebuild();
@@ -4583,6 +4629,45 @@ window.buildPrintHTML = function(g){
   };
   if(Object.keys(pend).length || server.length) apply();
 })();
+</script>
+<script>
+// ================== تھیم: روشنی (خودکار/لائٹ/ڈارک) + رنگ ==================
+(function(){
+  const PALS = [['green','سبز','#0f5a56'],['blue','نیلا','#1d4f91'],['purple','جامنی','#5b3a8e'],['brown','بھورا','#7a4a21'],['rose','گلابی','#9b2c4f']];
+  const MODES = [['auto','خودکار'],['light','لائٹ'],['dark','ڈارک']];
+  const root = document.documentElement, mq = window.matchMedia('(prefers-color-scheme: dark)');
+  let st = {mode:'auto', pal:'green'};
+  try{ st = Object.assign(st, JSON.parse(localStorage.getItem('jid_theme')||'{}')); }catch(e){}
+  function paint(){
+    const m = document.getElementById('thMode'), p = document.getElementById('thPal'); if(!m||!p) return;
+    m.innerHTML = MODES.map(x=>'<button class="urdu '+(st.mode===x[0]?'on':'')+'" onclick="setThemeMode(\''+x[0]+'\')">'+x[1]+'</button>').join('');
+    p.innerHTML = PALS.map(x=>'<button title="'+x[1]+'" class="'+(st.pal===x[0]?'on':'')+'" style="background:'+x[2]+'" onclick="setThemePal(\''+x[0]+'\')"></button>').join('');
+  }
+  function apply(){
+    const dark = st.mode==='dark' || (st.mode==='auto' && mq.matches);
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    if(st.pal==='green') root.removeAttribute('data-pal'); else root.setAttribute('data-pal', st.pal);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if(meta) meta.setAttribute('content', getComputedStyle(root).getPropertyValue('--hd1').trim() || '#0a3230');
+    try{ localStorage.setItem('jid_theme', JSON.stringify(st)); }catch(e){}
+    paint();
+  }
+  window.openTheme = function(){ paint(); document.getElementById('themeOverlay').classList.add('open'); };
+  window.closeTheme = function(){ document.getElementById('themeOverlay').classList.remove('open'); };
+  window.setThemeMode = function(m){ st.mode = m; apply(); };
+  window.setThemePal = function(p){ st.pal = p; apply(); };
+  if(mq.addEventListener) mq.addEventListener('change', ()=>{ if(st.mode==='auto') apply(); });
+  apply();
+})();
+</script>
+<script>
+// پاس ورڈ دکھانا / چھپانا
+function togglePw(){
+  const i = document.getElementById('loginPass'), b = document.getElementById('pwEye');
+  const show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  b.textContent = show ? '🙈' : '👁';
+}
 </script>
 <script>
 // لکھتے وقت (کی بورڈ کھلنے پر) فیلڈ کو نظر کے سامنے لانا
