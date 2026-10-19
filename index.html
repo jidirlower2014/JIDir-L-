@@ -335,6 +335,12 @@ body.authed #themeBtn{display:inline-block;}
 .th-sw button{width:44px; height:44px; border-radius:50%; border:3px solid transparent; cursor:pointer;}
 .th-sw button.on{border-color:var(--ink); box-shadow:0 0 0 2px var(--paper) inset;}
 .cand-sum{flex-wrap:wrap;} .cand-sum div{min-width:30%;}
+.m-card .right .paid{font-size:12px; margin-top:5px; color:#1fa84f; font-weight:700;}
+.m-card .right .paid span{font-family:'Inter',sans-serif; direction:ltr; display:inline-block;}
+#footNote{color:var(--ink) !important; font-weight:800 !important; font-size:15px !important; text-align:center;}
+#crumb{font-family:inherit !important; direction:rtl !important; text-align:right !important; font-size:13px !important; color:#e6f2ef !important; line-height:1.9; margin:0;}
+#syncBtn{margin:6px 6px 0 0; padding:3px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.5); background:rgba(0,0,0,.18); color:#bff0c8; font-size:12px; cursor:pointer; display:none;}
+body.authed #syncBtn{display:inline-block;}
 </style>
 </head>
 <body>
@@ -342,9 +348,10 @@ body.authed #themeBtn{display:inline-block;}
 <header>
   <div>
     <h1 class="urdu">جماعت اسلامی ضلع دیر پائین</h1>
-    <p>Zones → Muqamat → Hisab Kitab / Arkan</p>
+    <p id="crumb" class="urdu"></p>
     <button id="logoutBtn" class="urdu" onclick="doLogout()">🚪 لاگ آؤٹ</button>
     <button id="themeBtn" class="urdu" onclick="openTheme()">🎨 تھیم</button>
+    <button id="syncBtn" class="urdu" onclick="syncNow()">🔄 سنک</button>
     <button id="installBtn2" class="urdu" onclick="installApp()" style="display:none; margin:6px 6px 0 0; padding:3px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(0,0,0,.18); color:#ffe9a8; font-size:12px; cursor:pointer;">📲 انسٹال کریں</button>
   </div>
   <div class="badges">
@@ -3441,7 +3448,8 @@ function renderHisab(zone){
     li.className = 'm-card';
     li.onclick = ()=> openHisabDetail(m);
     li.innerHTML = `<div class="left"><div class="name urdu">${m.name}</div><div class="sub">${m.arkan} arkan</div></div>
-      <div class="right"><div class="amt ${f.baqaya<=0?'clear':''}">${fmt(f.baqaya)}</div><div class="tag">baqaya</div></div>`;
+      <div class="right"><div class="amt ${f.baqaya<=0?'clear':''}">${fmt(f.baqaya)}</div><div class="tag">baqaya</div>
+        <div class="paid urdu">ادا شدہ: <span>${fmt(f.wasooli)}</span></div></div>`;
     list.appendChild(li);
   });
 }
@@ -3685,7 +3693,7 @@ function closeArkanDetail(){
   if(activePage==='arkan') document.getElementById('arkanPage').style.display='block';
 }
 
-document.getElementById('footNote').textContent = 'اراکین: مکمل ضلعی ڈیٹا (2100 اراکین، 8 زونز) — Google Sheet سے۔ حساب کتاب: ثمرباغ مکمل، باقی جلد۔';
+document.getElementById('footNote').textContent = 'جماعت اسلامی ضلع دیر پائین';
 renderAll();
 </script>
 <script>
@@ -3808,12 +3816,13 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   // ---------- Google Sheet ----------
   function apiUrl(){ return (SHEET_API_URL || LS.get('jid_api','') || '').trim(); }
   function apiKey(){ return SHEET_API_KEY || LS.get('jid_key',''); }
-  async function syncFromSheet(){
+  async function syncCore(){
     const url = apiUrl(); if(!url) return false;
     try{
       const r = await fetch(url + (url.includes('?')?'&':'?') + 'key=' + encodeURIComponent(apiKey()) + '&t=' + Date.now());
       const j = await r.json();
       if(!j || !Array.isArray(j.deposits)) return false;
+      window.__lastJ = j;
       if(window.__onNotifs){ try{ window.__onNotifs(j.notifications); }catch(e){} }
       if(window.__onCands){ try{ window.__onCands(j.candidates); }catch(e){} }
       if(window.__onArkLog){ try{ window.__onArkLog(j.arkLog); }catch(e){} }
@@ -3829,6 +3838,34 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       return true;
     }catch(e){ return false; }
   }
+  function pendingCount(){
+    let n = 0;
+    ['jid_pending','jid_n_pend','jid_c_pend','jid_a_pend','jid_f_pend','jid_n_dels','jid_c_dels'].forEach(k=>{
+      const v = LS.get(k, null); if(Array.isArray(v)) n += v.length; else if(v && typeof v==='object') n += Object.keys(v).length;
+    });
+    return n;
+  }
+  function setSync(state){
+    const n = pendingCount(); window.__syncState = state; window.__syncPend = n;
+    const b = document.getElementById('syncBtn'); if(!b) return;
+    const t = new Date(), hm = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+    b.textContent = state==='nolink' ? '⚠️ Sheet لنک نہیں' : state==='fail' ? '⚠️ Sheet سے رابطہ نہیں' : state==='old' ? '⚠️ Apps Script پرانا' : (n ? '⏳ '+n+' تبدیلیاں باقی' : '✅ سنک '+hm);
+    b.style.color = (state==='ok' && !n) ? '#bff0c8' : '#ffd9a0';
+  }
+  async function syncFromSheet(){
+    const ok = await syncCore(), j = window.__lastJ;
+    setSync(!apiUrl() ? 'nolink' : !ok ? 'fail' : (j && (j.arkLog===undefined || j.candidates===undefined || j.finEdits===undefined || j.notifications===undefined)) ? 'old' : 'ok');
+    return ok;
+  }
+  window.syncNow = async function(){
+    const b = document.getElementById('syncBtn'); if(b) b.textContent = '🔄 سنک ہو رہا ہے…';
+    await syncFromSheet();
+    const st = window.__syncState, n = window.__syncPend;
+    if(st==='nolink') alert('اس فون میں Google Sheet کا لنک نہیں ہے، اس لیے ڈیٹا دوسرے فونز تک نہیں جاتا۔ index.html میں SHEET_API_URL میں لنک ڈالیں۔');
+    else if(st==='fail') alert('Google Sheet سے رابطہ نہیں ہو سکا۔ انٹرنیٹ دیکھیں، اور Apps Script کی Deploy میں "Who has access: Anyone" ہونا چاہیے۔');
+    else if(st==='old') alert('Google Apps Script کا پرانا ورژن چل رہا ہے، اس لیے نئے فیچرز کا ڈیٹا شیٹ میں محفوظ نہیں ہوتا۔ نیا apps_script.gs paste کرکے Deploy → Manage deployments → ✏️ → New version → Deploy کریں۔');
+    else if(n) alert(n + ' تبدیلیاں ابھی شیٹ تک نہیں پہنچیں۔ کچھ دیر بعد دوبارہ دبائیں؛ اگر یہ نہ گھٹیں تو Apps Script کا نیا ورژن Deploy کریں۔');
+  };
   function snapshot(m){
     return { mkey:m._key, zone:m._zone.name, name:m.name, ameer:m.ameer||'', sabiqa:m.sabiqa||0, saalana:m.saalana||0,
              wasooli:m.wasooli, baqaya:m.baqaya, monthly:m.monthly };
@@ -3898,7 +3935,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.__depRebuild = rebuild;
   rebuild();
   syncFromSheet();
-  setInterval(()=>{ if(!document.hidden) syncFromSheet(); }, 60000);
+  setInterval(()=>{ if(!document.hidden) syncFromSheet(); }, 20000);
+  window.addEventListener('focus', ()=>syncFromSheet());
+  window.addEventListener('online', ()=>syncFromSheet());
   document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) syncFromSheet(); });
 })();
 </script>
@@ -4668,6 +4707,32 @@ function togglePw(){
   i.type = show ? 'text' : 'password';
   b.textContent = show ? '🙈' : '👁';
 }
+</script>
+<script>
+// ================== ہیڈر میں موجودہ صفحے کا راستہ: گھر > مالیات > زون > مقام ==================
+(function(){
+  const TABS = {hisab:'مالیات', arkan:'اراکین', umara:'امراء', notif:'اطلاعات', cands:'امیدواران'};
+  let arkanMuqam = null;
+  function update(){
+    const el = document.getElementById('crumb'); if(!el) return;
+    const parts = ['گھر'];
+    if(currentZone !== null){
+      parts.push(TABS[activePage] || '');
+      const z = DATA.zones.find(z=>z.id===currentZone); if(z) parts.push(z.name);
+      if(activePage==='hisab' && document.getElementById('hisabDetail').classList.contains('open') && hisabTargetM) parts.push(hisabTargetM.name);
+      if(activePage==='arkan' && document.getElementById('arkanDetail').classList.contains('open') && arkanMuqam) parts.push(arkanMuqam);
+    }
+    el.textContent = parts.filter(Boolean).join(' > ');
+  }
+  function wrap(name, fn){
+    const orig = window[name]; if(typeof orig !== 'function') return;
+    window[name] = function(){ const r = orig.apply(this, arguments); if(fn) fn.apply(null, arguments); update(); return r; };
+  }
+  ['switchPage','renderAll','showLanding','selectZone','openHisabDetail','closeHisabDetail','closeArkanDetail'].forEach(n=>wrap(n));
+  wrap('openArkanDetail', g=>{ arkanMuqam = g && g.m; });
+  wrap('closeArkanDetail', ()=>{ arkanMuqam = null; });
+  update();
+})();
 </script>
 <script>
 // لکھتے وقت (کی بورڈ کھلنے پر) فیلڈ کو نظر کے سامنے لانا
