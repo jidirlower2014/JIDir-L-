@@ -306,7 +306,9 @@ body.ro .sheet-btn.dep:not(#arkRepBtn), body.ro .n-composer, body.ro .n-del, bod
 @font-face{font-family:'Jameel Noori Nastaleeq'; src:local('Jameel Noori Nastaleeq'), local('JameelNooriNastaleeq'), url('fonts/JameelNooriNastaleeq.ttf') format('truetype'); font-display:swap;}
 #printSheet, #printSheet *{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu',serif !important;}
 #printSheet h2, #printSheet h3{font-size:16px; line-height:2;}
-#printSheet td, #printSheet th{font-size:14px; line-height:1.6; padding:3px 5px !important;}
+#printSheet td, #printSheet th{font-size:14px; line-height:1.6; padding:5px 5px !important;}
+#printSheet table.pg{width:100%;}
+#printSheet table.pg:last-child{page-break-after:auto !important; break-after:auto !important;}
 #printSheet{padding:12px 14px !important;}
 @page{size:A4; margin:12mm;}
 @media print{
@@ -342,6 +344,27 @@ body.authed #themeBtn{display:inline-block;}
 #crumb{font-family:inherit !important; direction:rtl !important; text-align:right !important; font-size:13px !important; color:#e6f2ef !important; line-height:1.9; margin:0;}
 #syncBtn{margin:6px 6px 0 0; padding:3px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.5); background:rgba(0,0,0,.18); color:#bff0c8; font-size:12px; cursor:pointer; display:none;}
 body.authed #syncBtn{display:inline-block;}
+
+/* ===== ڈیسک ٹاپ ورژن (موبائل ویسا ہی رہے گا) ===== */
+@media (min-width:900px){
+  .wrap{max-width:1180px !important;}
+  .tabs,#tabsBar{max-width:1180px !important;}
+  div:has(> .zone-btn){display:grid !important; grid-template-columns:repeat(4,1fr) !important; gap:16px !important;}
+  div:has(> .m-card), div:has(> .cand-card), #notifList{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:12px;}
+  .m-card, .cand-card, .n-item{margin-bottom:0 !important;}
+  .m-card:hover, .cand-card:hover, .zone-btn:hover{transform:translateY(-2px); box-shadow:0 10px 24px rgba(20,40,40,.16) !important; cursor:pointer;}
+  header{padding:14px 40px !important;}
+  header h1{font-size:25px !important;}
+  .flag-badge{width:84px !important;}
+  #crumb{font-size:15px !important;}
+  .sheet-overlay{align-items:center !important;}
+  .action-sheet{max-width:540px; border-radius:22px !important; margin:0 auto;}
+  .cand-sum,.dep-row,.cand-form,.cand-filter,.n-composer{max-width:820px;}
+  .tab-btn{font-size:15px !important; padding-top:12px; padding-bottom:12px;}
+}
+#ameerEditBtn{display:none; border:none; background:none; font-size:15px; opacity:.35; cursor:pointer; margin:0 0 6px;}
+body.authed:not(.role-zone):not(.ro) #ameerEditBtn{display:inline-block;}
+#ameerEditBtn:hover{opacity:1;}
 </style>
 </head>
 <body>
@@ -474,6 +497,7 @@ body.authed #syncBtn{display:inline-block;}
 
   <!-- UMARA PAGE -->
   <div id="umaraPage" style="display:none;">
+    <button id="ameerEditBtn" title="امراء میں تبدیلی" onclick="ameerOpen()">⚙️</button>
     <div class="tabs" style="padding:2px 0 12px;">
       <button class="tab-btn urdu active" id="subZonal" onclick="switchUmaraSub('zonal')">زونل امراء</button>
       <button class="tab-btn urdu" id="subMuqami" onclick="switchUmaraSub('muqami')">مقامی امراء</button>
@@ -3793,6 +3817,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       m.wasooli = m._base.wasooli; m.baqaya = m._base.baqaya; m.monthly = Object.assign({}, m._base.monthly); m._dep = 0;
       const fe = (window.__finLatest||{})[m._key];
       if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
+      { const am = (window.__ameerM||{})[m._key]; if(am && (!fe || am.t >= fe.t)){ m.ameer = am.n; m.contact = am.c; } }
       { const grp = m._g, cnt = grp ? grp.mem.length : (m.arkan||0);
         if(grp) m.arkan = cnt; m.saalana = cnt * 4800; m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
     });
@@ -3973,6 +3998,18 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
     <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="finEditClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="ameerOverlay" onclick="if(event.target===this) ameerClose()">
+  <div class="action-sheet" style="max-height:90vh; overflow:auto;">
+    <h4 class="urdu">امراء کی تبدیلی (نئی مدت)</h4>
+    <label class="dep-field"><span class="urdu">کس کا امیر</span><select id="amType" class="urdu" onchange="ameerFill()"><option value="z">زونل امیر</option><option value="m">مقامی امیر</option></select></label>
+    <label class="dep-field"><span class="urdu">زون</span><select id="amZone" class="urdu" onchange="ameerFill()"></select></label>
+    <label class="dep-field" id="amMuqamW" style="display:none;"><span class="urdu">مقام</span><select id="amMuqam" class="urdu" onchange="ameerPick()"></select></label>
+    <label class="dep-field"><span class="urdu">نئے امیر کا نام</span><input id="amName" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="amPhone" type="tel" inputmode="tel"></label>
+    <button class="sheet-btn dep urdu" onclick="ameerSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="ameerClose()">منسوخ</button>
   </div>
 </div>
 <div class="sheet-overlay" id="arkAddOverlay" onclick="if(event.target===this) arkAddClose()">
@@ -4424,6 +4461,12 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
         it.z = e.zone; it.mu = e.muqam;
       }
     });
+    const amM = {};
+    ev.filter(e=>e.type==='ameer').forEach(e=>{
+      if(e.x && e.x.kind==='m') amM[e.key] = {n:e.n, c:e.c, t:e.t};
+      else { const zo = DATA.zones.find(x=>x.id===e.zone); if(zo){ zo.ameer = e.n; zo.ameerContact = e.c; } }
+    });
+    window.__ameerM = amM;
     ev.filter(e=>e.type==='muqam').forEach(e=>{
       const zo = DATA.zones.find(x=>x.id===e.zone);
       if(AR_DATA[e.zone] && !AR_DATA[e.zone].some(g=>g.m===e.muqam)) AR_DATA[e.zone].push({m:e.muqam, mem:[]});
@@ -4553,6 +4596,35 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if($('arkAddOverlay').classList.contains('open') && $('aZone').value===z) fillAddMuqam(name);
     toast('نیا مقام شامل ہو گیا ✓');
   };
+  // زونل / مقامی امراء کی تبدیلی (صرف سپر ایڈمن، چھپے ہوئے ⚙️ بٹن سے)
+  function amZoneObj(){ return DATA.zones.find(x=>x.id===$('amZone').value); }
+  window.ameerOpen = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    $('amType').value = 'z';
+    $('amZone').innerHTML = DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===currentZone?' selected':'')+'>'+esc(x.name)+'</option>').join('');
+    ameerFill(); $('ameerOverlay').classList.add('open');
+  };
+  window.ameerClose = function(){ $('ameerOverlay').classList.remove('open'); };
+  window.ameerFill = function(){
+    const z = amZoneObj(); if(!z) return; const t = $('amType').value;
+    $('amMuqamW').style.display = t==='m' ? 'block' : 'none';
+    if(t==='m'){ $('amMuqam').innerHTML = z.muqamat.map((m,i)=>'<option value="'+i+'">'+esc(m.name)+'</option>').join(''); ameerPick(); }
+    else { $('amName').value = z.ameer||''; $('amPhone').value = z.ameerContact||''; }
+  };
+  window.ameerPick = function(){
+    const z = amZoneObj(), m = z && z.muqamat[$('amMuqam').value||0];
+    $('amName').value = m ? (m.ameer||'') : ''; $('amPhone').value = m ? (m.contact||'') : '';
+  };
+  window.ameerSave = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const z = amZoneObj(), t = $('amType').value, name = $('amName').value.trim(), ph = $('amPhone').value.trim();
+    if(!z) return; if(!name){ toast('نئے امیر کا نام لکھیں'); return; }
+    let key = '', mu = '';
+    if(t==='m'){ const m = z.muqamat[$('amMuqam').value||0]; if(!m) return; key = m._key; mu = m.name; }
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'ameer', reason:(t==='m'?'مقامی':'زونل')+' امیر کی تبدیلی', zone:z.id, muqam:mu, n:name, f:'', c:ph, key, date:today(), t:now, x:{kind:t}});
+    ameerClose(); toast('امیر کی تبدیلی محفوظ ہو گئی ✓');
+  };
   window.arkDelClose = function(){ $('arkDelOverlay').classList.remove('open'); };
   window.arkRemove = function(reason){
     if(!curG || !curM || window.__ro) return;
@@ -4577,7 +4649,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='ameer' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -4604,19 +4676,23 @@ window.buildPrintHTML = function(g){
   const zn = (DATA.zones.find(z=>z.id===zid)||{}).name || '';
   const purpose = document.getElementById('lstType').value==='purpose' ? document.getElementById('lstPurpose').value : '';
   const now = Date.now();
-  // منظوری کی تاریخ سے 90 دن پورے نہ ہوئے ہوں تو استصواب/انتخاب کے لیے اہل نہیں
   const short = a => a.s && Math.floor((now - new Date(a.s+'T00:00:00').getTime())/86400000) < 90;
   const num = v=>{ const n = parseInt(String(v||'').replace(/\D/g,''),10); return isNaN(n) ? Infinity : n; };
-  const rows = g.mem.slice().sort((x,y)=>num(x.d)-num(y.d)).map((a,i)=>{
-    const kv = (purpose && short(a)) ? 'استصواب یا انتخاب کے لئے وقت پورا نہیں ہے۔' : (a.k||'-');
-    return `<tr><td>${i+1}</td><td>${a.d||'-'}</td><td class="ltr">${a.s||'-'}</td><td>${a.n}</td><td>${a.f||'-'}</td><td class="ltr">${a.c||'-'}</td><td class="urdu">${kv}</td>${purpose?'<td style="min-width:90px;"></td>':''}</tr>`;
-  }).join('');
-  const N = purpose ? 8 : 7, cs = 'style="font-size:16px;border:none;background:#fff;color:#0f4c4a;"';
-  return `<table><thead>
+  const list = g.mem.slice().sort((x,y)=>num(x.d)-num(y.d));
+  const N = purpose ? 8 : 7, cs = 'style="font-size:16px;border:none;background:#fff;color:#0f4c4a;"', ROWS = 25;
+  const head = `<thead>
     <tr><th colspan="${N}" class="urdu" ${cs}>فہرست ارکان جماعت اسلامی ضلع دیر پائین</th></tr>
     <tr><th colspan="${N}" class="urdu" ${cs}>مقام: ${g.m} &nbsp;&nbsp;&nbsp; زون: ${zn}${purpose?' &nbsp;&nbsp;&nbsp; برائے: '+purpose:''}</th></tr>
-    <tr><th class="urdu">نمبر شمار</th><th class="urdu">ضلعی رکنیت نمبر</th><th class="urdu">تاریخ منظوری رکنیت</th><th class="urdu">نام رکن</th><th class="urdu">ولدیت</th><th class="urdu">رابطہ نمبر</th><th class="urdu">کیفیت</th>${purpose?'<th class="urdu">دستخط</th>':''}</tr></thead>
-    <tbody>${rows}</tbody></table>`;
+    <tr><th class="urdu">نمبر شمار</th><th class="urdu">ضلعی رکنیت نمبر</th><th class="urdu">تاریخ منظوری رکنیت</th><th class="urdu">نام رکن</th><th class="urdu">ولدیت</th><th class="urdu">رابطہ نمبر</th><th class="urdu">کیفیت</th>${purpose?'<th class="urdu">دستخط</th>':''}</tr></thead>`;
+  let out = '';
+  for(let st = 0; st < Math.max(list.length, 1); st += ROWS){
+    const rows = list.slice(st, st+ROWS).map((a,j)=>{
+      const kv = (purpose && short(a)) ? 'استصواب یا انتخاب کے لئے وقت پورا نہیں ہے۔' : (a.k||'-');
+      return `<tr><td>${st+j+1}</td><td>${a.d||'-'}</td><td class="ltr">${a.s||'-'}</td><td>${a.n}</td><td>${a.f||'-'}</td><td class="ltr">${a.c||'-'}</td><td class="urdu">${kv}</td>${purpose?'<td style="min-width:90px;"></td>':''}</tr>`;
+    }).join('');
+    out += `<table class="pg" style="page-break-after:always;break-after:page;">${head}<tbody>${rows}</tbody></table>`;   // ہر صفحے پر زیادہ سے زیادہ 25 ارکان
+  }
+  return out;
 };
 </script>
 <script>
@@ -4628,35 +4704,23 @@ window.buildPrintHTML = function(g){
     el.innerHTML = buildPrintHTML(g);
     const oldW = el.style.width, oldB = el.style.boxSizing;
     el.style.width = '794px'; el.style.boxSizing = 'border-box';          // A4 چوڑائی (96dpi)
-    const top = el.getBoundingClientRect().top;
-    const rowEnds = Array.prototype.map.call(el.querySelectorAll('tr'), tr=>(tr.getBoundingClientRect().bottom - top)*2);
-    const heads = el.querySelectorAll('thead tr');
-    const headPx = Math.ceil((heads[heads.length-1].getBoundingClientRect().bottom - top)*2);   // عنوان + کالم ہیڈنگ کی اونچائی
+    const er = el.getBoundingClientRect();
+    const tabs = Array.prototype.map.call(el.querySelectorAll('table.pg'), t=>{ const r = t.getBoundingClientRect(); return {y:(r.top - er.top)*2, h:r.height*2}; });
     const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff', width:794, windowWidth:794});
     el.style.width = oldW; el.style.boxSizing = oldB;
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','pt','a4');
-    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), M = 16;
-    const k = pw / canvas.width, pagePx = Math.floor((ph - 2*M) / k);
-    let y = 0, first = true;
-    while(y < canvas.height - 2){
-      const cap = first ? pagePx : pagePx - headPx;
-      let cut = Math.min(canvas.height, y + cap);
-      if(cut < canvas.height){
-        const fit = rowEnds.filter(v=>v > y + 40 && v <= cut);          // صفحہ قطار کے آخر پر ٹوٹے
-        if(fit.length) cut = Math.floor(fit[fit.length-1]);
-        if(cut <= y) cut = Math.min(canvas.height, y + cap);
-      }
-      const off = first ? 0 : headPx;
+    const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), M = 16, k = pw / canvas.width;
+    tabs.forEach((t,i)=>{
       const part = document.createElement('canvas');
-      part.width = canvas.width; part.height = off + (cut - y);
+      part.width = canvas.width; part.height = Math.ceil(t.h);
       const ctx = part.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,part.width,part.height);
-      if(!first) ctx.drawImage(canvas, 0, 0, canvas.width, headPx, 0, 0, canvas.width, headPx);   // ہر صفحے پر ہیڈر
-      ctx.drawImage(canvas, 0, y, canvas.width, cut - y, 0, off, canvas.width, cut - y);
-      if(!first) pdf.addPage();
-      pdf.addImage(part.toDataURL('image/png'), 'PNG', 0, M, pw, part.height * k);
-      first = false; y = cut;
-    }
+      ctx.drawImage(canvas, 0, Math.floor(t.y), canvas.width, part.height, 0, 0, canvas.width, part.height);
+      if(i) pdf.addPage();
+      let w = pw, h = part.height * k; const maxH = ph - 2*M;
+      if(h > maxH){ const f = maxH / h; w = pw * f; h = maxH; }                // لمبے ناموں سے صفحہ بھر جائے تو چھوٹا کر دیں
+      pdf.addImage(part.toDataURL('image/png'), 'PNG', (pw - w)/2, M, w, h);
+    });
     return pdf.output('blob');
   };
 })();
