@@ -365,6 +365,53 @@ body.authed #syncBtn{display:inline-block;}
 #ameerEditBtn{display:none; border:none; background:none; font-size:15px; opacity:.35; cursor:pointer; margin:0 0 6px;}
 body.authed:not(.role-zone):not(.ro) #ameerEditBtn{display:inline-block;}
 #ameerEditBtn:hover{opacity:1;}
+
+/* ===== ریسپانسیو: ہر سکرین کے مطابق ===== */
+html{-webkit-text-size-adjust:100%; text-size-adjust:100%;}
+body{overflow-x:hidden;}
+img, svg, canvas{max-width:100%;}
+.action-sheet{max-height:92vh; overflow-y:auto;}
+header h1{font-size:clamp(15px, 4.6vw, 25px) !important;}
+#crumb{font-size:clamp(11px, 3.2vw, 15px) !important;}
+#tabsBar .tab-btn{font-size:clamp(10.5px, 3.1vw, 15px) !important;}
+#newsTicker .tk-track{font-size:clamp(13px, 3.6vw, 17px);}
+.cand-sum b{font-size:clamp(18px, 6vw, 26px);}
+
+/* چھوٹے فون (360px سے کم) */
+@media (max-width:359px){
+  header{padding:8px 10px !important;}
+  .flag-badge{width:44px !important;}
+  .wrap{padding-left:10px !important; padding-right:10px !important;}
+  .tabs{padding-left:10px !important; padding-right:10px !important;}
+  #tabsBar{gap:3px;}
+  .cand-sum div{min-width:45%;}
+  .login-card{padding:20px 14px 16px;}
+  #themeBtn,#syncBtn,#logoutBtn,#installBtn2{padding:3px 8px !important; font-size:11px !important;}
+}
+/* ٹیبلٹ / بڑا فون (600px سے اوپر) */
+@media (min-width:600px){
+  .wrap{max-width:100% !important; padding-left:22px !important; padding-right:22px !important;}
+  .tabs,#tabsBar{max-width:100% !important; padding-left:22px !important; padding-right:22px !important;}
+  div:has(> .zone-btn){display:grid !important; grid-template-columns:repeat(3,1fr); gap:14px;}
+  div:has(> .m-card), div:has(> .cand-card), #notifList{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px;}
+  .m-card, .cand-card, .n-item{margin-bottom:0 !important;}
+  .sheet-overlay{align-items:center !important;}
+  .action-sheet{max-width:540px; border-radius:22px !important; margin:0 auto;}
+  header{padding-left:28px !important; padding-right:28px !important;}
+}
+/* بڑی سکرین */
+@media (min-width:900px){
+  div:has(> .zone-btn){grid-template-columns:repeat(4,1fr) !important;}
+}
+@media (min-width:1500px){
+  .wrap, .tabs, #tabsBar{max-width:1400px !important;}
+  div:has(> .m-card), div:has(> .cand-card), #notifList{grid-template-columns:repeat(auto-fill,minmax(360px,1fr));}
+}
+/* فون لینڈ سکیپ / کم اونچائی */
+@media (max-height:520px){
+  header{padding-top:6px !important; padding-bottom:6px !important;}
+  .action-sheet{max-height:96vh;}
+}
 </style>
 </head>
 <body>
