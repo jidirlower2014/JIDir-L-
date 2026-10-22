@@ -4222,19 +4222,24 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
 
   // ---------- ربن ----------
+  let lastTickText = '', lastTickW = 0;
   function renderTicker(){
     const el = $('newsTicker'); if(!el) return;
     const now = Date.now();
     const items = visible().filter(n=>n.tickerUntil > now);
-    if(!items.length){ el.classList.remove('has'); return; }
+    if(!items.length){ el.classList.remove('has'); lastTickText = ''; return; }
     const admin = window.__role==='admin';
     const text = items.map(n=> (admin ? '['+zoneName(n.zone)+'] ' : '') + n.text.replace(/\s+/g,' ')).join('      ◆      ');
+    // متن اور چوڑائی نہ بدلی ہو تو پٹی کو چھیڑو نہیں، تاکہ وہ بیچ میں رک کر دوبارہ شروع نہ ہو
+    if(text === lastTickText && el.classList.contains('has') && Math.abs(($('tkView').clientWidth||0) - lastTickW) < 60) return;
+    lastTickText = text;
     const tr = $('tkTrack');
     tr.style.animation = 'none';
     tr.innerHTML = esc(text);
     el.classList.add('has');
     requestAnimationFrame(()=>{
       const vw = $('tkView').clientWidth || window.innerWidth;
+      lastTickW = vw;
       const w = tr.scrollWidth;
       el.style.setProperty('--tk-w', vw + 'px');
       el.style.setProperty('--tk-dur', Math.max(12, (w+vw)/55) + 's');
