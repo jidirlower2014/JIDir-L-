@@ -480,6 +480,10 @@ header #crumb{line-height:1.5 !important; font-size:clamp(11px,3vw,14px) !import
 #logoutBtn, #themeBtn, #syncBtn, #installBtn2{margin:2px 0 0 5px !important; padding:1px 9px !important; font-size:10.5px !important; line-height:1.7 !important;}
 .sheet-btn.gold{background:linear-gradient(135deg,#ffe9a6,#f3c04d) !important; color:#5a3d00 !important; border-color:#d9a441 !important; box-shadow:0 6px 16px rgba(217,164,65,.35);}
 body.ro #candPage .sheet-btn.gold, body.ro #candPage .cand-form{display:none !important;}
+.cd-leg{display:flex; gap:12px; justify-content:center; font-size:12px; margin:2px 0 12px; flex-wrap:wrap;}
+.cd-leg i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-left:5px;}
+.cd-track{height:14px; border-radius:8px; background:var(--line); overflow:hidden; direction:rtl;}
+.cd-stack{display:flex; height:100%; border-radius:8px; overflow:hidden; transition:width .6s ease;}
 </style>
 </head>
 <body>
@@ -3847,7 +3851,7 @@ function closeArkanDetail(){
   if(activePage==='arkan') document.getElementById('arkanPage').style.display='block';
 }
 
-document.getElementById('footNote').textContent = 'جماعت اسلامی ضلع دیر پائین';
+document.getElementById('footNote').innerHTML = 'جماعت اسلامی ضلع دیر پائین<br><small style="font-weight:400;opacity:.6;font-family:Inter,sans-serif;">v27.10-d</small>';
 renderAll();
 </script>
 <script>
@@ -4126,6 +4130,20 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
     <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="finEditClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="candEditOverlay" onclick="if(event.target===this) candEditClose()">
+  <div class="action-sheet" style="max-height:90vh; overflow:auto;">
+    <h4 class="urdu">امیدوار میں ترمیم</h4>
+    <label class="dep-field"><span class="urdu">نام *</span><input id="ceName" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">ولدیت *</span><input id="ceFather" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">ویلج کونسل *</span><input id="ceVc" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="cePhone" type="tel" inputmode="tel"></label>
+    <label class="dep-field" id="ceZoneW"><span class="urdu">زون</span><select id="ceZone" class="urdu"></select></label>
+    <label class="dep-field"><span class="urdu">مقام</span><select id="ceMuqam" class="urdu"></select></label>
+    <label class="dep-field"><span class="urdu">نوٹ</span><input id="ceNote" class="urdu"></label>
+    <button class="sheet-btn gold urdu" onclick="candEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="candEditClose()">منسوخ</button>
   </div>
 </div>
 <div class="sheet-overlay" id="attOverlay" onclick="if(event.target===this) candAttClose()">
@@ -4531,11 +4549,12 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
           ${c.phone?`<a href="tel:${esc(c.phone.replace(/[^0-9+]/g,''))}">📞 کال</a>`:''}
           ${wa?`<a target="_blank" rel="noopener" href="https://wa.me/${wa}">💬 واٹس ایپ</a>`:''}
           ${(admin && !ok)?`<button onclick="candAtt('${c.id}')">📋 حاضری</button><button onclick="candStatus('${c.id}')">✔ رکن بنائیں</button>`:''}
-          <button class="del" onclick="candDel('${c.id}')">🗑</button></div></div>`;
+          <button onclick="candEdit('${c.id}')">✏️ ترمیم</button><button class="del" onclick="candDel('${c.id}')">🗑</button></div></div>`;
     }).join('') || '<div class="n-empty urdu">کوئی امیدوار موجود نہیں</div>';
-    box.innerHTML = `<div class="cand-sum urdu"><div><b>${l.length}</b><span>کل امیدواران</span></div><div><b>${pc}</b><span>زیرِ جائزہ</span></div><div><b>${ready}</b><span>اہل</span></div><div><b>${done}</b><span>رکن بن گئے</span></div></div>
+    box.innerHTML = candDash(l) + `<div class="cand-sum urdu"><div><b>${l.length}</b><span>کل امیدواران</span></div><div><b>${pc}</b><span>زیرِ جائزہ</span></div><div><b>${ready}</b><span>اہل</span></div><div><b>${done}</b><span>رکن بن گئے</span></div></div>
       ${fz}
-      <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candPdf()">📄 PDF بنائیں / پرنٹ (25 فی صفحہ)</button>
+      <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candPdf()">📄 امیدواران کی فہرست PDF (25 فی صفحہ)</button>
+      <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candSumPdf()">📊 ${admin?'زون وار':'مقام وار'} خلاصہ PDF</button>
       <button class="sheet-btn gold urdu" onclick="candForm()"><span class="ic">➕</span> نیا امیدوار شامل کریں</button>
       <div class="cand-form" style="display:${formOpen?'block':'none'};">
         <label class="dep-field"><span class="urdu">نام *</span><input id="cName" class="urdu"></label>
@@ -4548,6 +4567,86 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
         <button class="sheet-btn gold urdu" style="margin-bottom:0;" onclick="candSave()"><span class="ic">✅</span> محفوظ کریں</button></div>
       <div class="cand-filter">${chip('all','سب')}${chip('pending','زیرِ جائزہ')}${chip('ready','اہل')}${chip('approved','رکن بن گئے')}</div>
       <h2 class="section-title urdu">امیدواران رکنیت — ${zf==='all'&&admin?'تمام زونز':esc(zname(admin?zf:window.__zone))}</h2>${cards}`;
+    candDashInit();
+  };
+
+  // ---------- امیدواران کا ڈیش بورڈ ----------
+  function grp(l){
+    const admin = window.__role==='admin', m = {};
+    if(admin && zf==='all') DATA.zones.forEach(z=>{ m[z.id] = {name:z.name, n:0, p:0, e:0, a:0, w:0, iv:0}; });
+    l.forEach(c=>{
+      const k = admin ? c.zone : (c.muqam||'—');
+      const o = m[k] || (m[k] = {name: admin ? zname(k) : k, n:0, p:0, e:0, a:0, w:0, iv:0});
+      o.n++; if(c.status==='approved') o.a++; else if(elig(c)) o.e++; else o.p++;
+      o.w += nW(c); if(c.att && c.att.iv==='pass') o.iv++;
+    });
+    return Object.keys(m).map(k=>m[k]);
+  }
+  function candDash(l){
+    const admin = window.__role==='admin', G = grp(l), mx = Math.max.apply(null, G.map(o=>o.n).concat([1])), T = l.length;
+    const slide = h=>'<div class="dash-card dash-slide">'+h+'</div>', what = admin ? 'زون وار' : 'مقام وار';
+    const s1 = '<p class="dash-title urdu">امیدواران — '+what+' تفصیل</p><p class="dash-sub urdu">کل امیدواران: '+T+'</p>'
+      + '<div class="cd-leg urdu"><span><i style="background:#2fb36d"></i>رکن بن گئے</span><span><i style="background:#2aa7a0"></i>اہل</span><span><i style="background:#e0a63a"></i>زیرِ جائزہ</span></div>'
+      + G.map(o=>'<div class="fd-row"><div class="fd-top"><span class="urdu">'+esc(o.name)+'</span><b>'+o.n+'</b></div><div class="cd-track"><div class="cd-stack" style="width:'+(o.n/mx*100)+'%"><i style="flex:'+o.a+';background:#2fb36d"></i><i style="flex:'+o.e+';background:#2aa7a0"></i><i style="flex:'+o.p+';background:#e0a63a"></i></div></div></div>').join('');
+    const s2 = '<p class="dash-title urdu">ورکشاپ حاضری اور انٹرویو</p><p class="dash-sub urdu">'+what+' اوسط حاضری (6 میں سے)</p>'
+      + G.map(o=>{ const av = o.n ? o.w/o.n : 0; return '<div class="fd-row"><div class="fd-top"><span class="urdu">'+esc(o.name)+'</span><b>'+av.toFixed(1)+' / 6</b></div><div class="fd-track"><i style="width:'+Math.max(av/6*100, av>0?2:0)+'%"></i></div><div class="fd-amt urdu" style="direction:rtl;text-align:right;">اہل: '+o.e+' • انٹرویو پاس: '+o.iv+' • رکن بن گئے: '+o.a+'</div></div>'; }).join('');
+    const COL = ZONE_COLORS; let ang = -Math.PI/2, paths = '', leg = '';
+    G.forEach((o,i)=>{ const f = T ? o.n/T : 0, sw = f*Math.PI*2;
+      if(f > 0.0005) paths += '<path d="'+describeArc(100,100,90,ang,ang+Math.min(sw,Math.PI*2-0.001))+'" fill="'+COL[i%COL.length]+'" stroke="var(--panel)" stroke-width="2"/>';
+      ang += sw; leg += '<li><span class="dot" style="background:'+COL[i%COL.length]+'"></span><span class="lz urdu">'+esc(o.name)+'</span><span class="lp">'+o.n+' • '+(T?(o.n/T*100).toFixed(0):0)+'%</span></li>'; });
+    const s3 = '<p class="dash-title urdu">امیدواران کا '+what+' حصہ</p><div class="dash-chart-wrap">'
+      + (T ? '<svg viewBox="0 0 200 200" width="200" height="200">'+paths+'<circle cx="100" cy="100" r="52" fill="var(--panel)"/><text x="100" y="104" text-anchor="middle" font-size="26" font-weight="700" fill="var(--ink)">'+T+'</text></svg>' : '<p class="dash-sub urdu" style="padding:40px 0;">ابھی کوئی امیدوار نہیں</p>')
+      + '</div><ul class="dash-legend">'+leg+'</ul>';
+    return '<div class="dash-carousel" id="candCar">'+[s1,s2,s3].map(slide).join('')+'</div><div class="dash-dots" id="candDots"></div>';
+  }
+  function candDashInit(){
+    const c = $('candCar'), d = $('candDots'); if(!c || !d) return;
+    const n = c.children.length, idx = ()=>Math.round(Math.abs(c.scrollLeft)/(c.clientWidth||1));
+    d.innerHTML = Array.from({length:n}, (_,i)=>'<i data-i="'+i+'"></i>').join('');
+    const paint = ()=>Array.prototype.forEach.call(d.children, (x,i)=>x.classList.toggle('on', i===idx()));
+    c.addEventListener('scroll', ()=>{ clearTimeout(c._t); c._t = setTimeout(paint, 60); }, {passive:true});
+    d.addEventListener('click', e=>{ const i = e.target.dataset && e.target.dataset.i; if(i!==undefined){ const dir = getComputedStyle(c).direction==='rtl' ? -1 : 1; c.scrollTo({left:dir*Number(i)*c.clientWidth, behavior:'smooth'}); } });
+    setTimeout(paint, 100);
+  }
+  function dl(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 20000); }
+  window.candSumPdf = async function(){
+    const l = list(), G = grp(l), admin = window.__role==='admin';
+    if(!l.length){ toast('کوئی امیدوار موجود نہیں'); return; }
+    const sum = f=>G.reduce((a,o)=>a+o[f],0), tn = sum('n');
+    const label = (window.__role==='zone') ? zname(window.__zone) : (zf==='all' ? 'تمام زونز' : zname(zf));
+    const rows = G.map((o,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(o.name)+'</td><td>'+o.n+'</td><td>'+o.p+'</td><td>'+o.e+'</td><td>'+o.a+'</td><td>'+(o.n?(o.w/o.n).toFixed(1):'0.0')+' / 6</td><td>'+o.iv+'</td></tr>').join('');
+    const html = '<div class="rp-h urdu">جماعت اسلامی ضلع دیر پائین<div>فہرست امیدواران رکنیت — '+(admin?'زون وار':'مقام وار')+' خلاصہ ('+esc(label)+')</div></div>'
+      + '<table class="rp-t urdu"><tr><th>نمبر شمار</th><th>'+(admin?'زون':'مقام')+'</th><th>کل امیدواران</th><th>زیرِ جائزہ</th><th>اہل</th><th>رکن بن گئے</th><th>اوسط ورکشاپ</th><th>انٹرویو پاس</th></tr>'+rows
+      + '<tr><th></th><th>میزان</th><th>'+tn+'</th><th>'+sum('p')+'</th><th>'+sum('e')+'</th><th>'+sum('a')+'</th><th>'+(tn?(sum('w')/tn).toFixed(1):'0.0')+' / 6</th><th>'+sum('iv')+'</th></tr></table>';
+    toast('PDF بن رہی ہے…');
+    try{ dl(await generatePdfBlob({__rep:true, html}), 'umeedwaran-summary.pdf'); }catch(e){ pdfFail(e, ()=>'<table class="pg"><tbody><tr><td style="border:none;padding:0;">'+html+'</td></tr></tbody></table>'); }
+  };
+  function pdfFail(e, htmlFn){
+    const why = (typeof html2canvas==='undefined' || !window.jspdf) ? 'PDF لائبریری لوڈ نہیں ہوئی (انٹرنیٹ چیک کریں)' : (e && e.message ? e.message : 'نامعلوم خرابی');
+    toast('PDF فائل نہیں بن سکی: ' + why + ' — پرنٹ کھل رہا ہے، وہاں سے Save as PDF چنیں');
+    try{ document.getElementById('printSheet').innerHTML = htmlFn(); document.getElementById('printOverlay').classList.add('open'); setTimeout(()=>window.print(), 900); }catch(_){}
+  }
+  // ---------- امیدوار میں ترمیم ----------
+  let editId = null;
+  window.candEdit = function(id){
+    if(window.__ro) return;
+    const c = all().find(x=>x.id===id); if(!c) return;
+    if(window.__role==='zone' && c.zone!==window.__zone) return;
+    editId = id; const admin = window.__role==='admin';
+    $('ceName').value = c.name||''; $('ceFather').value = c.father||''; $('ceVc').value = c.vc||''; $('cePhone').value = c.phone||''; $('ceNote').value = c.note||'';
+    $('ceZoneW').style.display = admin ? 'block' : 'none';
+    $('ceZone').innerHTML = DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===c.zone?' selected':'')+'>'+esc(x.name)+'</option>').join('');
+    const fillM = (z,sel)=>{ let h = mo(z); if(sel && h.indexOf('<option>'+esc(sel)+'</option>')<0) h = '<option>'+esc(sel)+'</option>'+h; $('ceMuqam').innerHTML = h; if(sel) $('ceMuqam').value = sel; };
+    fillM(c.zone, c.muqam); $('ceZone').onchange = ()=>fillM($('ceZone').value, '');
+    $('candEditOverlay').classList.add('open');
+  };
+  window.candEditClose = function(){ $('candEditOverlay').classList.remove('open'); editId = null; };
+  window.candEditSave = function(){
+    const c = all().find(x=>x.id===editId); if(!c || window.__ro) return;
+    const name = $('ceName').value.trim(), father = $('ceFather').value.trim(), vc = $('ceVc').value.trim();
+    if(!name || !father || !vc){ toast('نام، ولدیت اور ویلج کونسل لکھنا ضروری ہے'); return; }
+    const n = Object.assign({}, c, {name, father, vc, phone:$('cePhone').value.trim(), muqam:$('ceMuqam').value, note:$('ceNote').value.trim(), zone: window.__role==='admin' ? $('ceZone').value : c.zone, t:Date.now()});
+    pend[c.id] = n; save(); candEditClose(); renderCandPage(); toast('ترمیم محفوظ ہو گئی ✓'); post({action:'cand_save', c:n}).then(sync);
   };
   window.candZoneCh = function(){ $('cMuqam').innerHTML = mo($('cZone').value); };
   window.candZF = function(v){ zf = v; renderCandPage(); };
@@ -4620,7 +4719,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       const blob = await generatePdfBlob({__cands:true, list:l, label});
       const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'umeedwaran-rukniyat.pdf';
       document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 20000);
-    }catch(e){ toast('PDF نہیں بن سکی، دوبارہ کوشش کریں'); }
+    }catch(e){ pdfFail(e, ()=>buildCandHTML({list:l, label})); }
   };
 })();
 </script>
@@ -4920,11 +5019,13 @@ window.buildPrintHTML = function(g){
     const el = document.getElementById('printSheet');
     el.innerHTML = buildPrintHTML(g);
     const oldW = el.style.width, oldB = el.style.boxSizing;
+    const ov = el.closest('.print-overlay') || el.parentElement, ovOld = ov.style.cssText;
+    ov.style.cssText = 'display:block;position:fixed;left:-10000px;top:0;width:794px;height:auto;overflow:visible;z-index:-1;visibility:visible;';   // چھپی ہوئی شیٹ کو سکرین سے باہر دکھا کر بنائیں
     el.style.width = '794px'; el.style.boxSizing = 'border-box';          // A4 چوڑائی (96dpi)
     const er = el.getBoundingClientRect();
     const tabs = Array.prototype.map.call(el.querySelectorAll('table.pg'), t=>{ const r = t.getBoundingClientRect(); return {y:(r.top - er.top)*2, h:r.height*2}; });
     const canvas = await html2canvas(el, {scale:2, backgroundColor:'#ffffff', width:794, windowWidth:794});
-    el.style.width = oldW; el.style.boxSizing = oldB;
+    el.style.width = oldW; el.style.boxSizing = oldB; ov.style.cssText = ovOld;
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','pt','a4');
     const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), M = 16, k = pw / canvas.width;
