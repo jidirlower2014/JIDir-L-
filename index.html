@@ -412,6 +412,72 @@ header h1{font-size:clamp(15px, 4.6vw, 25px) !important;}
   header{padding-top:6px !important; padding-bottom:6px !important;}
   .action-sheet{max-height:96vh;}
 }
+.att-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 12px;}
+.att-grid button{padding:10px 4px; border-radius:12px; border:2px solid var(--line); background:var(--panel); color:var(--ink); font-size:13px; line-height:1.7; cursor:pointer;}
+.att-grid button.on{border-color:#3f9d62; background:#e1f5e8; color:#1e6b3a; font-weight:700;}
+
+/* ===== ہوم: سوائپ ہونے والے ڈیش بورڈ ===== */
+.dash-carousel{display:flex; align-items:flex-start; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; -webkit-overflow-scrolling:touch; margin-bottom:6px;}
+.dash-carousel::-webkit-scrollbar{display:none;}
+.dash-slide{flex:0 0 100%; box-sizing:border-box; scroll-snap-align:center; scroll-snap-stop:always; margin:0 !important;}
+.dash-dots{display:flex; justify-content:center; gap:7px; margin:8px 0 14px;}
+.dash-dots i{width:8px; height:8px; border-radius:50%; background:var(--line); cursor:pointer; transition:all .25s;}
+.dash-dots i.on{width:24px; border-radius:6px; background:linear-gradient(90deg,var(--hd2),var(--acc2));}
+.fd-kpi{display:flex; gap:8px; margin:10px 0 14px;}
+.fd-kpi div{flex:1; min-width:0; text-align:center; padding:10px 4px; border-radius:14px; color:#fff;}
+.fd-kpi .g{background:linear-gradient(135deg,#118a4a,#35c27a);} .fd-kpi .r{background:linear-gradient(135deg,#b5283a,#ef6a6a);} .fd-kpi .p{background:linear-gradient(135deg,var(--hd2),var(--acc2));}
+.fd-kpi b{display:block; font-size:clamp(12px,3.6vw,16px); font-family:'Inter',sans-serif; direction:ltr;}
+.fd-kpi span{font-size:11px; opacity:.92;}
+.fd-row{margin:0 0 12px;}
+.fd-top{display:flex; justify-content:space-between; align-items:baseline; font-size:14px; margin-bottom:5px;}
+.fd-top b{font-family:'Inter',sans-serif; color:#1b9a55; font-size:13px;}
+.fd-track{height:14px; border-radius:8px; background:var(--line); overflow:hidden; direction:rtl;}
+.fd-track i{display:block; height:100%; border-radius:8px; background:linear-gradient(90deg,#118a4a,#4bd68b); transition:width .8s ease;}
+.fd-amt{font-size:11px; color:var(--muted); margin-top:3px; font-family:'Inter',sans-serif; direction:ltr; text-align:left;}
+
+/* ===== خوبصورت بٹن ===== */
+button{-webkit-tap-highlight-color:transparent; transition:transform .12s, box-shadow .2s, filter .2s, background .2s;}
+button:active{transform:scale(.97);}
+button:focus-visible{outline:3px solid var(--gold); outline-offset:2px;}
+.tab-btn{background:linear-gradient(180deg,var(--panel),var(--paper)); border:1px solid var(--line); font-weight:700; box-shadow:0 2px 6px rgba(20,40,40,.08), inset 0 1px 0 rgba(255,255,255,.5);}
+.tab-btn:hover{filter:brightness(1.04); box-shadow:0 6px 14px rgba(20,40,40,.14);}
+.sheet-btn{border-radius:16px !important; padding:12px 14px !important; font-weight:700; border:1px solid var(--line); background:linear-gradient(180deg,var(--panel),var(--paper)); box-shadow:0 3px 10px rgba(20,40,40,.10);}
+.sheet-btn .ic{width:34px; height:34px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:rgba(0,0,0,.07);}
+.sheet-btn.dep{background:linear-gradient(135deg,#ffe9a6,#f3c04d) !important; color:#5a3d00 !important; border-color:#d9a441 !important; box-shadow:0 6px 16px rgba(217,164,65,.35);}
+.sheet-btn.wa{background:linear-gradient(135deg,#1fb85a,#0d8a3f) !important; color:#fff !important; border-color:#0d8a3f !important; box-shadow:0 6px 16px rgba(13,138,63,.35);}
+.sheet-btn:hover{filter:brightness(1.05); transform:translateY(-1px);}
+.sheet-cancel{border-radius:16px !important; border:2px solid var(--line) !important; font-weight:700;}
+.login-btn{background:linear-gradient(135deg,var(--hd2),var(--acc2)) !important; border-radius:14px !important; font-weight:700; box-shadow:0 8px 20px rgba(15,76,74,.35);}
+.cand-actions a, .cand-actions button{border-radius:12px !important; font-weight:700; background:linear-gradient(180deg,var(--panel),var(--paper)) !important; box-shadow:0 2px 6px rgba(20,40,40,.08);}
+.cand-filter button.on, .th-row button.on{background:linear-gradient(135deg,var(--hd2),var(--acc2)) !important; color:#fff !important; border-color:transparent !important;}
+#logoutBtn, #themeBtn, #syncBtn, #installBtn2{backdrop-filter:blur(6px); background:rgba(255,255,255,.16) !important; border:1px solid rgba(255,255,255,.45) !important; font-weight:700;}
+.zd-ring{display:flex; justify-content:center; margin:4px 0 6px;}
+.dash-carousel{overflow-y:hidden; transition:height .3s ease;}
+body.authed:not(.role-zone) #landingRepBtn{display:flex !important;}
+body.ro #landingRepBtn{display:flex !important;}
+
+.rp-box{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:12px; margin-bottom:12px;}
+.rp-h{text-align:center; font-size:17px; font-weight:700; margin-bottom:10px; line-height:2;}
+.rp-h div{font-size:12px; font-weight:400; color:var(--muted);}
+.rp-sec{font-weight:700; margin:14px 0 6px; padding-right:8px; border-right:4px solid var(--gold); font-size:14px;}
+.rp-t{width:100%; border-collapse:collapse; font-size:12px;}
+.rp-t th,.rp-t td{border:1px solid var(--line); padding:4px 3px; text-align:center;}
+.rp-t th{background:var(--paper); font-weight:700;}
+.rp-t td:first-child{text-align:right; min-width:86px;}
+.rp-i{width:100%; min-width:36px; box-sizing:border-box; border:1px solid var(--line); border-radius:6px; padding:6px 2px; text-align:center; font-size:14px; background:var(--paper); color:var(--ink);}
+.rp-info{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.rp-info label span{display:block; font-size:11px; color:var(--muted); margin-bottom:2px;}
+.rp-info .rp-i{text-align:right; padding:8px 6px;}
+.rp-row{display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+.rp-st{padding:2px 10px; border-radius:12px; font-size:12px; border:1px solid var(--line);}
+.rp-st.ok{background:#e1f5e8; color:#1e6b3a; border-color:#3f9d62;} .rp-st.dr{background:#fff4d6; color:#7a5200; border-color:var(--gold);}
+
+/* ===== ہیڈر چھوٹا، جھنڈا بڑا ===== */
+header{padding-top:4px !important; padding-bottom:4px !important; gap:10px !important;}
+header h1{line-height:1.35 !important; margin:0 0 1px !important; font-size:clamp(14px,4vw,25px) !important; white-space:nowrap;}
+header #crumb{line-height:1.5 !important; font-size:clamp(11px,3vw,14px) !important;}
+.flag-badge{width:86px !important; height:62px !important; object-fit:cover; object-position:center; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));}
+#logoutBtn, #themeBtn, #syncBtn, #installBtn2{margin:2px 0 0 5px !important; padding:1px 9px !important; font-size:10.5px !important; line-height:1.7 !important;}
 </style>
 </head>
 <body>
@@ -435,12 +501,18 @@ header h1{font-size:clamp(15px, 4.6vw, 25px) !important;}
 </div>
 
 <div id="landing" class="wrap" style="display:none;">
-  <div class="dash-card">
+  <button class="sheet-btn dep urdu" id="landingRepBtn" style="display:none; width:100%; justify-content:center; margin-bottom:10px;" onclick="openRepFromLanding()"><span class="ic">📑</span> رپورٹس</button>
+  <div class="dash-carousel" id="dashCar">
+  <div class="dash-card dash-slide">
     <p class="dash-title urdu">زون وار اراکین — ڈیش بورڈ</p>
     <p class="dash-sub" id="dashSub"></p>
     <div class="dash-chart-wrap" id="dashChartWrap"></div>
     <ul class="dash-legend" id="dashLegend"></ul>
   </div>
+  <div class="dash-card dash-slide" id="finSlide1"></div>
+  <div class="dash-card dash-slide" id="finSlide2"></div>
+  </div>
+  <div class="dash-dots" id="dashDots"></div>
   <div class="landing-intro">
     <h2 class="urdu">زون منتخب کریں</h2>
     <p class="urdu">کسی بھی زون پر ٹیپ کر کے اس کا مکمل ریکارڈ دیکھیں</p>
@@ -455,6 +527,7 @@ header h1{font-size:clamp(15px, 4.6vw, 25px) !important;}
   <button class="tab-btn urdu" id="tabUmara" onclick="switchPage('umara')">امراء</button>
   <button class="tab-btn urdu" id="tabNotif" onclick="switchPage('notif')">اطلاعات<span class="nbadge" id="notifBadge"></span></button>
   <button class="tab-btn urdu" id="tabCands" onclick="switchPage('cands')">امیدواران</button>
+  <button class="tab-btn urdu" id="tabRep" onclick="switchPage('reports')">رپورٹس</button>
 </div>
 
 <div class="wrap" id="mainWrap" style="display:none;">
@@ -462,6 +535,7 @@ header h1{font-size:clamp(15px, 4.6vw, 25px) !important;}
 
   <!-- HISAB KITAB PAGE -->
   <div id="hisabPage">
+    <div class="dash-carousel" id="zoneCar"></div><div class="dash-dots" id="zoneDots"></div>
     <div class="zone-ameer">
       <div><div class="urdu" id="zoneAmeerName"></div><div class="role">زون امیر</div></div>
       <div class="num" id="zoneAmeerContact"></div>
@@ -524,6 +598,7 @@ header h1{font-size:clamp(15px, 4.6vw, 25px) !important;}
   </div>
 
   <div id="candPage" style="display:none;"></div>
+  <div id="repPage" style="display:none;"></div>
 
   <!-- ARKAN PAGE -->
   <div id="arkanPage" style="display:none;">
@@ -3324,6 +3399,8 @@ function switchPage(p){
   document.getElementById('notifPage').style.display = p==='notif' ? 'block':'none';
   document.getElementById('tabCands').classList.toggle('active', p==='cands');
   document.getElementById('candPage').style.display = p==='cands' ? 'block':'none';
+  document.getElementById('tabRep').classList.toggle('active', p==='reports');
+  document.getElementById('repPage').style.display = p==='reports' ? 'block':'none';
   document.getElementById('hisabPage').style.display = p==='hisab' ? 'block':'none';
   document.getElementById('arkanPage').style.display = p==='arkan' ? 'block':'none';
   document.getElementById('umaraPage').style.display = p==='umara' ? 'block':'none';
@@ -3438,6 +3515,7 @@ function renderAll(){
   else if(activePage==='umara'){ if(umaraSub==='zonal') renderZonalUmara(); else renderUmaraPage(zone); }
   else if(activePage==='notif') renderNotifPage();
   else if(activePage==='cands') renderCandPage();
+  else if(activePage==='reports') renderRep();
   else renderArkanPage(zone);
 }
 
@@ -3904,6 +3982,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       if(window.__onCands){ try{ window.__onCands(j.candidates); }catch(e){} }
       if(window.__onArkLog){ try{ window.__onArkLog(j.arkLog); }catch(e){} }
       if(window.__onFin){ try{ window.__onFin(j.finEdits); }catch(e){} }
+      if(window.__onReports){ try{ window.__onReports(j.reportForms, j.reportData); }catch(e){} }
       server = j.deposits.map(d=>({ id:String(d.id), mkey:d.mkey, month:d.month, amount:Number(d.amount)||0, date:d.date }));
       LS.set('jid_server', server);
       const ids = new Set(server.map(d=>d.id));
@@ -3926,7 +4005,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const n = pendingCount(); window.__syncState = state; window.__syncPend = n;
     const b = document.getElementById('syncBtn'); if(!b) return;
     const t = new Date(), hm = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
-    b.textContent = state==='nolink' ? '⚠️ Sheet لنک نہیں' : state==='fail' ? '⚠️ Sheet سے رابطہ نہیں' : state==='old' ? '⚠️ Apps Script پرانا' : (n ? '⏳ '+n+' تبدیلیاں باقی' : '✅ سنک '+hm);
+    b.textContent = state==='nolink' ? '⚠️ لنک نہیں' : state==='fail' ? '⚠️ رابطہ نہیں' : state==='old' ? '⚠️ پرانا ورژن' : (n ? '⏳ '+n+' باقی' : '✅ '+hm);
     b.style.color = (state==='ok' && !n) ? '#bff0c8' : '#ffd9a0';
   }
   async function syncFromSheet(){
@@ -4045,6 +4124,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
     <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="finEditClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="attOverlay" onclick="if(event.target===this) candAttClose()">
+  <div class="action-sheet" style="max-height:90vh; overflow:auto;">
+    <h4 class="urdu" id="attTitle"></h4>
+    <p class="sub urdu">ہر ماہ کی ورکشاپ میں حاضری لگائیں — حاضر: <b id="attCnt">0 / 6</b></p>
+    <div id="attBox" class="att-grid"></div>
+    <label class="dep-field"><span class="urdu">انٹرویو</span><select id="attIv" class="urdu"><option value="">انٹرویو باقی</option><option value="present">انٹرویو دیا (نتیجہ باقی)</option><option value="pass">انٹرویو پاس</option><option value="fail">انٹرویو فیل</option></select></label>
+    <button class="sheet-btn dep urdu" onclick="candAttSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="candAttClose()">منسوخ</button>
   </div>
 </div>
 <div class="sheet-overlay" id="ameerOverlay" onclick="if(event.target===this) ameerClose()">
@@ -4371,7 +4460,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 })();
 </script>
 <script>
-// ================== امیدواران رکنیت ==================
+// ================== امیدواران رکنیت: فارم، ورکشاپ حاضری، انٹرویو، PDF ==================
 (function(){
   const mem = {};
   const LS = {
@@ -4381,11 +4470,20 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   const $ = id=>document.getElementById(id);
   const esc = t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   let server = LS.get('jid_c_server', []), pend = LS.get('jid_c_pend', {}), dels = LS.get('jid_c_dels', []);
-  let filter = 'all', formOpen = false;
-  const zid = ()=> window.__role==='zone' ? window.__zone : currentZone;
+  let filter = 'all', formOpen = false, zf = 'all', attId = null, attW = [0,0,0,0,0,0];
+  const zname = id=>{ const z = DATA.zones.find(x=>x.id===id); return z ? z.name : id; };
+  const nW = c=>((c.att && c.att.w) || []).filter(Boolean).length;
+  const IV = {'':'انٹرویو باقی', present:'انٹرویو دیا (نتیجہ باقی)', pass:'انٹرویو پاس', fail:'انٹرویو فیل'};
+  const elig = c=> nW(c)===6 && c.att && c.att.iv==='pass';
+  const parseAtt = v=>{ try{ return typeof v==='string' ? JSON.parse(v||'{}') : (v||{}); }catch(_){ return {}; } };
   function all(){
     const map = {}; server.forEach(c=>map[c.id]=c); Object.keys(pend).forEach(id=>map[id]=pend[id]);
     return Object.keys(map).map(k=>map[k]).filter(c=>dels.indexOf(c.id)<0).sort((a,b)=>b.created-a.created);
+  }
+  function list(){
+    let l = all();
+    if(window.__role==='zone') l = l.filter(c=>c.zone===window.__zone); else if(zf!=='all') l = l.filter(c=>c.zone===zf);
+    return l;
   }
   function save(){ LS.set('jid_c_server',server); LS.set('jid_c_pend',pend); LS.set('jid_c_dels',dels); }
   function post(obj){
@@ -4394,68 +4492,79 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       body: JSON.stringify(Object.assign({key:api.key()}, obj))}).catch(()=>{});
   }
   function sync(){ if(window.__api) setTimeout(window.__api.sync, 3000); }
-  function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2400); }
+  function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',3200); }
 
-  window.__onCands = function(list){
-    if(!Array.isArray(list)) return;
-    server = list.map(c=>({id:String(c.id), zone:String(c.zone), name:String(c.name), phone:String(c.phone||''), muqam:String(c.muqam||''),
-      status:String(c.status||'pending'), note:String(c.note||''), created:Number(c.created)||0, t:Number(c.t)||0}));
+  window.__onCands = function(l){
+    if(!Array.isArray(l)) return;
+    server = l.map(c=>({id:String(c.id), zone:String(c.zone), name:String(c.name), father:String(c.father||''), vc:String(c.vc||''), phone:String(c.phone||''),
+      muqam:String(c.muqam||''), status:String(c.status||'pending'), note:String(c.note||''), att:parseAtt(c.att), created:Number(c.created)||0, t:Number(c.t)||0}));
     const sm = {}; server.forEach(c=>sm[c.id]=c);
     Object.keys(pend).forEach(id=>{ if(sm[id] && sm[id].t >= pend[id].t) delete pend[id]; });
-    dels = dels.filter(id=>sm[id]);
-    save();
+    dels = dels.filter(id=>sm[id]); save();
     Object.keys(pend).forEach(id=>post({action:'cand_save', c:pend[id]}));
     dels.forEach(id=>post({action:'cand_del', id}));
-    if(activePage==='cands' && currentZone!==null && !formOpen) renderCandPage();
+    if(activePage==='cands' && currentZone!==null && !formOpen && !attId) renderCandPage();
   };
+  const mo = z=>{ const zo = DATA.zones.find(x=>x.id===z); return (zo?zo.muqamat:[]).map(m=>'<option>'+esc(m.name)+'</option>').join('') + '<option>دیگر</option>'; };
 
   window.renderCandPage = function(){
-    const z = DATA.zones.find(z=>z.id===zid()); const box = $('candPage'); if(!z || !box) return;
-    const list = all().filter(c=>c.zone===z.id);
-    const pc = list.filter(c=>c.status==='pending').length;
-    const shown = filter==='all' ? list : list.filter(c=>c.status===filter);
-    const opts = z.muqamat.map(m=>'<option>'+esc(m.name)+'</option>').join('') + '<option>دیگر</option>';
+    const box = $('candPage'); if(!box) return;
+    const admin = window.__role==='admin', l = list();
+    const done = l.filter(c=>c.status==='approved').length, ready = l.filter(c=>c.status!=='approved' && elig(c)).length, pc = l.length - done - ready;
+    const shown = l.filter(c=> filter==='all' ? true : filter==='approved' ? c.status==='approved' : filter==='ready' ? (c.status!=='approved' && elig(c)) : (c.status!=='approved' && !elig(c)));
+    const dz = zf!=='all' ? zf : (currentZone || DATA.zones[0].id);
+    const zsel = admin ? '<label class="dep-field"><span class="urdu">زون</span><select id="cZone" class="urdu" onchange="candZoneCh()">'+DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===dz?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>' : '';
+    const fz = admin ? '<label class="dep-field"><span class="urdu">زون کے مطابق دیکھیں</span><select class="urdu" onchange="candZF(this.value)"><option value="all">تمام زونز</option>'+DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===zf?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select></label>' : '';
     const chip = (f,t)=>`<button class="urdu ${filter===f?'on':''}" onclick="candFilter('${f}')">${t}</button>`;
     const cards = shown.map(c=>{
-      const ok = c.status==='approved', wa = (typeof toWaNumber==='function') ? toWaNumber(c.phone) : '';
+      const ok = c.status==='approved', el = !ok && elig(c), wa = (typeof toWaNumber==='function') ? toWaNumber(c.phone) : '';
       return `<div class="cand-card"><div class="cand-top"><div><div class="cand-name urdu">${esc(c.name)}</div>
-        <div class="cand-sub urdu">${esc(c.muqam||'')}</div></div>
-        <span class="cand-badge urdu ${ok?'ok':''}">${ok?'✅ رکن بن گئے':'⏳ زیرِ جائزہ'}</span></div>
+        <div class="cand-sub urdu">ولدیت: ${esc(c.father||'-')} • ${esc(c.muqam||'')}${c.vc?' • ویلج کونسل: '+esc(c.vc):''}${admin?' • '+esc(zname(c.zone)):''}</div></div>
+        <span class="cand-badge urdu ${ok||el?'ok':''}">${ok?'✅ رکن بن گئے':el?'🟢 اہل':'⏳ زیرِ جائزہ'}</span></div>
         ${c.phone?`<div class="cand-phone">${esc(c.phone)}</div>`:''}
+        <div class="cand-note urdu">📚 ورکشاپ ${nW(c)}/6 • 🎤 ${IV[(c.att&&c.att.iv)||'']}</div>
         ${c.note?`<div class="cand-note urdu">${esc(c.note)}</div>`:''}
         <div class="cand-actions urdu">
           ${c.phone?`<a href="tel:${esc(c.phone.replace(/[^0-9+]/g,''))}">📞 کال</a>`:''}
           ${wa?`<a target="_blank" rel="noopener" href="https://wa.me/${wa}">💬 واٹس ایپ</a>`:''}
-          ${(!ok && window.__role==='admin')?`<button onclick="candStatus('${c.id}')">✔ رکن بنائیں</button>`:''}
+          ${(admin && !ok)?`<button onclick="candAtt('${c.id}')">📋 حاضری</button><button onclick="candStatus('${c.id}')">✔ رکن بنائیں</button>`:''}
           <button class="del" onclick="candDel('${c.id}')">🗑</button></div></div>`;
     }).join('') || '<div class="n-empty urdu">کوئی امیدوار موجود نہیں</div>';
-    box.innerHTML = `<div class="cand-sum urdu"><div><b>${list.length}</b><span>کل امیدواران</span></div><div><b>${pc}</b><span>زیرِ جائزہ</span></div><div><b>${list.length-pc}</b><span>منظور</span></div></div>
+    box.innerHTML = `<div class="cand-sum urdu"><div><b>${l.length}</b><span>کل امیدواران</span></div><div><b>${pc}</b><span>زیرِ جائزہ</span></div><div><b>${ready}</b><span>اہل</span></div><div><b>${done}</b><span>رکن بن گئے</span></div></div>
+      ${fz}
+      <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candPdf()">📄 PDF بنائیں / پرنٹ (25 فی صفحہ)</button>
       <button class="sheet-btn dep urdu" onclick="candForm()"><span class="ic">➕</span> نیا امیدوار شامل کریں</button>
       <div class="cand-form" style="display:${formOpen?'block':'none'};">
-        <label class="dep-field"><span class="urdu">نام</span><input id="cName" class="urdu"></label>
+        <label class="dep-field"><span class="urdu">نام *</span><input id="cName" class="urdu"></label>
+        <label class="dep-field"><span class="urdu">ولدیت *</span><input id="cFather" class="urdu"></label>
+        <label class="dep-field"><span class="urdu">ویلج کونسل *</span><input id="cVc" class="urdu"></label>
         <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="cPhone" type="tel" inputmode="tel" placeholder="03xx-xxxxxxx"></label>
-        <label class="dep-field"><span class="urdu">مقام</span><select id="cMuqam" class="urdu">${opts}</select></label>
+        ${zsel}
+        <label class="dep-field"><span class="urdu">مقام</span><select id="cMuqam" class="urdu">${mo(admin ? dz : (window.__zone||dz))}</select></label>
         <label class="dep-field"><span class="urdu">نوٹ (اختیاری)</span><input id="cNote" class="urdu"></label>
         <button class="sheet-btn dep urdu" style="margin-bottom:0;" onclick="candSave()"><span class="ic">✅</span> محفوظ کریں</button></div>
-      <div class="cand-filter">${chip('all','سب')}${chip('pending','زیرِ جائزہ')}${chip('approved','منظور')}</div>
-      <h2 class="section-title urdu">امیدواران رکنیت — ${esc(z.name)}</h2>${cards}`;
+      <div class="cand-filter">${chip('all','سب')}${chip('pending','زیرِ جائزہ')}${chip('ready','اہل')}${chip('approved','رکن بن گئے')}</div>
+      <h2 class="section-title urdu">امیدواران رکنیت — ${zf==='all'&&admin?'تمام زونز':esc(zname(admin?zf:window.__zone))}</h2>${cards}`;
   };
+  window.candZoneCh = function(){ $('cMuqam').innerHTML = mo($('cZone').value); };
+  window.candZF = function(v){ zf = v; renderCandPage(); };
   window.candForm = function(){ formOpen = !formOpen; renderCandPage(); if(formOpen) setTimeout(()=>{ const n=$('cName'); if(n) n.focus(); },50); };
   window.candFilter = function(f){ filter = f; renderCandPage(); };
   window.candSave = function(){
     if(window.__ro) return;
-    const name = $('cName').value.trim();
-    if(!name){ toast('امیدوار کا نام لکھیں'); return; }
-    const now = Date.now(), id = now.toString(36)+Math.random().toString(36).slice(2,6);
-    const c = {id, zone:zid(), name, phone:$('cPhone').value.trim(), muqam:$('cMuqam').value, status:'pending', note:$('cNote').value.trim(), created:now, t:now};
+    const name = $('cName').value.trim(), father = $('cFather').value.trim(), vc = $('cVc').value.trim();
+    if(!name || !father || !vc){ toast('نام، ولدیت اور ویلج کونسل لکھنا ضروری ہے'); return; }
+    const now = Date.now(), id = now.toString(36)+Math.random().toString(36).slice(2,6), zone = window.__role==='admin' ? $('cZone').value : window.__zone;
+    const c = {id, zone, name, father, vc, phone:$('cPhone').value.trim(), muqam:$('cMuqam').value, status:'pending', note:$('cNote').value.trim(), att:{w:[0,0,0,0,0,0], iv:''}, created:now, t:now};
     pend[id] = c; save(); formOpen = false; renderCandPage(); toast('امیدوار شامل ہو گیا ✓');
     post({action:'cand_save', c}).then(sync);
   };
   window.candStatus = function(id){
     const c = all().find(x=>x.id===id); if(!c || c.status==='approved') return;
     if(window.__role!=='admin' || window.__ro){ toast('صرف سپر ایڈمن رکن بنا سکتا ہے'); return; }
+    if(!elig(c)){ toast('رکن بننے کے لیے 6 ورکشاپس میں مکمل حاضری اور انٹرویو پاس ہونا ضروری ہے (ابھی ورکشاپ '+nW(c)+'/6، '+IV[(c.att&&c.att.iv)||'']+')'); return; }
     window.arkAddFromCand(c);
-    const n = Object.assign({}, c, {status:'approved', t: Date.now()});
+    const n = Object.assign({}, c, {status:'approved', t:Date.now()});
     pend[id] = n; save(); renderCandPage(); post({action:'cand_save', c:n}).then(sync);
   };
   window.candDel = function(id){
@@ -4463,6 +4572,52 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if(!confirm('اس امیدوار کو حذف کریں؟')) return;
     delete pend[id]; if(dels.indexOf(id)<0) dels.push(id); save(); renderCandPage();
     post({action:'cand_del', id}).then(sync);
+  };
+
+  // ورکشاپ حاضری + انٹرویو (صرف سپر ایڈمن)
+  function paintAtt(){
+    $('attBox').innerHTML = attW.map((v,i)=>`<button type="button" class="urdu ${v?'on':''}" onclick="candAttTog(${i})">ورکشاپ ${i+1}<br>${v?'✅ حاضر':'—'}</button>`).join('');
+    $('attCnt').textContent = attW.filter(Boolean).length + ' / 6';
+  }
+  window.candAtt = function(id){
+    if(window.__role!=='admin' || window.__ro) return;
+    const c = all().find(x=>x.id===id); if(!c) return;
+    attId = id; attW = ((c.att && c.att.w) || []).slice(0,6); while(attW.length<6) attW.push(0);
+    $('attTitle').textContent = c.name + ' — ورکشاپ حاضری اور انٹرویو'; $('attIv').value = (c.att && c.att.iv) || '';
+    paintAtt(); $('attOverlay').classList.add('open');
+  };
+  window.candAttTog = function(i){ attW[i] = attW[i] ? 0 : 1; paintAtt(); };
+  window.candAttClose = function(){ $('attOverlay').classList.remove('open'); attId = null; };
+  window.candAttSave = function(){
+    const c = all().find(x=>x.id===attId); if(!c) return;
+    const n = Object.assign({}, c, {att:{w:attW.slice(), iv:$('attIv').value}, t:Date.now()});
+    pend[c.id] = n; save(); candAttClose(); renderCandPage(); post({action:'cand_save', c:n}).then(sync);
+    toast(elig(n) ? 'حاضری محفوظ — یہ امیدوار اب رکن بننے کا اہل ہے ✓' : 'حاضری محفوظ ہو گئی ✓');
+  };
+
+  // PDF (A4، ہر صفحے پر 25 امیدوار، ہر صفحے پر ہیڈر)
+  window.buildCandHTML = function(g){
+    const L = g.list, ROWS = 25, N = 10, cs = 'style="font-size:16px;border:none;background:#fff;color:#0f4c4a;"';
+    const head = `<thead><tr><th colspan="${N}" class="urdu" ${cs}>فہرست امیدواران رکنیت جماعت اسلامی ضلع دیر پائین</th></tr>
+      <tr><th colspan="${N}" class="urdu" ${cs}>${esc(g.label)}</th></tr>
+      <tr><th class="urdu">نمبر شمار</th><th class="urdu">نام</th><th class="urdu">ولدیت</th><th class="urdu">ویلج کونسل</th><th class="urdu">مقام</th><th class="urdu">زون</th><th class="urdu">رابطہ نمبر</th><th class="urdu">ورکشاپ</th><th class="urdu">انٹرویو</th><th class="urdu">کیفیت</th></tr></thead>`;
+    let out = '';
+    for(let st = 0; st < Math.max(L.length,1); st += ROWS){
+      const rows = L.slice(st, st+ROWS).map((c,j)=>`<tr><td>${st+j+1}</td><td>${esc(c.name)}</td><td>${esc(c.father||'-')}</td><td>${esc(c.vc||'-')}</td><td>${esc(c.muqam||'-')}</td><td>${esc(zname(c.zone))}</td><td class="ltr">${esc(c.phone||'-')}</td><td>${nW(c)}/6</td><td class="urdu">${IV[(c.att&&c.att.iv)||''].replace(' (نتیجہ باقی)','')}</td><td class="urdu">${c.status==='approved'?'رکن بن گئے':elig(c)?'اہل':'زیرِ جائزہ'}</td></tr>`).join('');
+      out += `<table class="pg" style="page-break-after:always;break-after:page;">${head}<tbody>${rows}</tbody></table>`;
+    }
+    return out;
+  };
+  window.candPdf = async function(){
+    const l = list().slice().sort((a,b)=> zname(a.zone).localeCompare(zname(b.zone)) || a.created-b.created);
+    if(!l.length){ toast('کوئی امیدوار موجود نہیں'); return; }
+    toast('PDF بن رہی ہے…');
+    const label = 'زون: ' + ((window.__role==='zone') ? zname(window.__zone) : (zf==='all' ? 'تمام زونز' : zname(zf)));
+    try{
+      const blob = await generatePdfBlob({__cands:true, list:l, label});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'umeedwaran-rukniyat.pdf';
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 20000);
+    }catch(e){ toast('PDF نہیں بن سکی، دوبارہ کوشش کریں'); }
   };
 })();
 </script>
@@ -4561,7 +4716,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 
   // امیدوار → رکن
   window.arkAddFromCand = function(c){
-    addEvent({id:'c'+c.id, type:'add', reason:'امیدوار سے رکن', zone:c.zone, muqam:c.muqam||'دیگر', n:c.name, f:'', c:c.phone||'', key:'add:c'+c.id, date:today(), t:Date.now()});
+    addEvent({id:'c'+c.id, type:'add', reason:'امیدوار سے رکن', zone:c.zone, muqam:c.muqam||'دیگر', n:c.name, f:c.father||'', c:c.phone||'', key:'add:c'+c.id, date:today(), t:Date.now(), x:{s:today(), vc:c.vc||''}});
     toast('اب یہ رکن بن گئے ہیں ✓');
   };
 
@@ -4724,6 +4879,8 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 // ================== فہرست ارکان: عام / مقصد کے مطابق (دستخط + 90 دن کی شرط) ==================
 function lstTypeChange(){ document.getElementById('lstPurposeW').style.display = document.getElementById('lstType').value==='purpose' ? 'block':'none'; }
 window.buildPrintHTML = function(g){
+  if(g && g.__cands) return buildCandHTML(g);
+  if(g && g.__rep) return '<table class="pg"><tbody><tr><td style="border:none;padding:0;">'+g.html+'</td></tr></tbody></table>';
   const zid = Object.keys(AR_DATA).find(z=>AR_DATA[z].indexOf(g)>-1);
   const zn = (DATA.zones.find(z=>z.id===zid)||{}).name || '';
   const purpose = document.getElementById('lstType').value==='purpose' ? document.getElementById('lstPurpose').value : '';
@@ -4876,7 +5033,7 @@ function togglePw(){
 <script>
 // ================== ہیڈر میں موجودہ صفحے کا راستہ: گھر > مالیات > زون > مقام ==================
 (function(){
-  const TABS = {hisab:'مالیات', arkan:'اراکین', umara:'امراء', notif:'اطلاعات', cands:'امیدواران'};
+  const TABS = {hisab:'مالیات', arkan:'اراکین', umara:'امراء', notif:'اطلاعات', cands:'امیدواران', reports:'رپورٹس'};
   let arkanMuqam = null;
   function update(){
     const el = document.getElementById('crumb'); if(!el) return;
@@ -4897,6 +5054,274 @@ function togglePw(){
   wrap('openArkanDetail', g=>{ arkanMuqam = g && g.m; });
   wrap('closeArkanDetail', ()=>{ arkanMuqam = null; });
   update();
+})();
+</script>
+<script>
+// ================== ہوم: مالیات وصولی کا زون وار ڈیش بورڈ + سوائپ ==================
+(function(){
+  const cmp = n=>{ const r = x=>String(Math.round(x*10)/10).replace(/\.0$/,''); return n>=1e6 ? r(n/1e6)+'M' : n>=1e3 ? r(n/1e3)+'K' : String(Math.round(n)); };
+  function renderFinDash(){
+    const s1 = document.getElementById('finSlide1'), s2 = document.getElementById('finSlide2'); if(!s1 || !s2) return;
+    const rows = DATA.zones.map((z,i)=>{
+      const w = z.muqamat.reduce((a,m)=>a+(m.wasooli||0),0), b = z.muqamat.reduce((a,m)=>a+Math.max(0,m.baqaya||0),0);
+      return {name:z.name, w, b, t:w+b, i};
+    });
+    const W = rows.reduce((a,r)=>a+r.w,0), B = rows.reduce((a,r)=>a+r.b,0), T = W + B, P = T ? W/T*100 : 0;
+    s1.innerHTML = '<p class="dash-title urdu">زون وار مالیات — وصولی</p><p class="dash-sub urdu">مالی سال 27-2026</p>'
+      + '<div class="fd-kpi urdu"><div class="g"><b>'+fmt(W)+'</b><span>کل وصولی</span></div><div class="r"><b>'+fmt(B)+'</b><span>کل باقی</span></div><div class="p"><b>'+P.toFixed(1)+'%</b><span>وصولی کا تناسب</span></div></div>'
+      + rows.map(r=>{ const p = r.t ? r.w/r.t*100 : 0;
+          return '<div class="fd-row"><div class="fd-top"><span class="urdu">'+r.name+'</span><b>'+p.toFixed(1)+'%</b></div><div class="fd-track"><i style="width:'+Math.max(p,p>0?2:0)+'%"></i></div><div class="fd-amt">'+fmt(r.w)+' / '+fmt(r.t)+'</div></div>'; }).join('');
+    const cx = 100, cy = 100, r = 90, ri = 52; let ang = -Math.PI/2, paths = '', leg = '';
+    rows.forEach((x,i)=>{
+      const f = W ? x.w/W : 0, sw = f*Math.PI*2;
+      if(f > 0.0005) paths += '<path d="'+describeArc(cx,cy,r,ang,ang+Math.min(sw,Math.PI*2-0.001))+'" fill="'+ZONE_COLORS[i%ZONE_COLORS.length]+'" stroke="var(--panel)" stroke-width="2"/>';
+      ang += sw;
+      leg += '<li><span class="dot" style="background:'+ZONE_COLORS[i%ZONE_COLORS.length]+'"></span><span class="lz urdu">'+x.name+'</span><span class="lp">'+cmp(x.w)+' • '+(W?(x.w/W*100).toFixed(1):'0.0')+'%</span></li>';
+    });
+    s2.innerHTML = '<p class="dash-title urdu">وصولی کا زون وار حصہ</p><p class="dash-sub urdu">کل وصولی: '+fmt(W)+'</p>'
+      + '<div class="dash-chart-wrap">'+(W ? '<svg viewBox="0 0 200 200" width="200" height="200">'+paths+'<circle cx="100" cy="100" r="'+ri+'" fill="var(--panel)"/><text x="100" y="98" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">'+cmp(W)+'</text><text x="100" y="116" text-anchor="middle" font-size="10" fill="var(--muted)">COLLECTED</text></svg>' : '<p class="dash-sub urdu" style="padding:40px 0;">ابھی کوئی وصولی درج نہیں</p>')+'</div>'
+      + '<ul class="dash-legend">'+leg+'</ul>';
+  }
+  function go(i){ const c = document.getElementById('dashCar'); if(!c) return; const dir = getComputedStyle(c).direction==='rtl' ? -1 : 1; c.scrollTo({left:dir*i*c.clientWidth, behavior:'smooth'}); }
+  function setup(){
+    const c = document.getElementById('dashCar'), d = document.getElementById('dashDots'); if(!c || !d || c._ok) return; c._ok = true;
+    const n = c.children.length, idx = ()=>Math.round(Math.abs(c.scrollLeft)/(c.clientWidth||1));
+    d.innerHTML = Array.from({length:n}, (_,i)=>'<i data-i="'+i+'"></i>').join('');
+    const paint = ()=>Array.prototype.forEach.call(d.children, (x,i)=>x.classList.toggle('on', i===idx()));
+    c.addEventListener('scroll', ()=>{ clearTimeout(c._t); c._t = setTimeout(paint, 60); }, {passive:true});
+    d.addEventListener('click', e=>{ const i = Number(e.target.dataset && e.target.dataset.i); if(!isNaN(i) && e.target.dataset.i!==undefined) go(i); });
+    ['pointerdown','touchstart','wheel'].forEach(ev=>c.addEventListener(ev, ()=>{ c._pause = Date.now()+15000; }, {passive:true}));
+    setInterval(()=>{ const l = document.getElementById('landing'); if(document.hidden || !l || l.offsetParent===null || Date.now() < (c._pause||0)) return; go((idx()+1)%n); }, 7000);
+    paint();
+  }
+  const _rd = window.renderDashboard;
+  window.renderDashboard = function(){ _rd.apply(this, arguments); renderFinDash(); setup(); const c = document.getElementById('dashCar'); if(c) setTimeout(()=>c.dispatchEvent(new Event('scroll')), 120); };
+})();
+</script>
+<script>
+// ================== زونل ذمہ دار / زون کے لیے: مقامات اور مالیات کا ڈیش بورڈ (سوائپ) ==================
+(function(){
+  const cmp = n=>{ const r = x=>String(Math.round(x*10)/10).replace(/\.0$/,''); return n>=1e6 ? r(n/1e6)+'M' : n>=1e3 ? r(n/1e3)+'K' : String(Math.round(n)); };
+  const bar = (name, p, right, sub)=>'<div class="fd-row"><div class="fd-top"><span class="urdu">'+name+'</span><b>'+right+'</b></div><div class="fd-track"><i style="width:'+Math.max(p,p>0?2:0)+'%"></i></div>'+(sub?'<div class="fd-amt">'+sub+'</div>':'')+'</div>';
+  function ring(p){
+    const r = 52, c = 2*Math.PI*r;
+    return '<svg viewBox="0 0 140 140" width="160" height="160"><defs><linearGradient id="zrg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4bd68b"/><stop offset="1" stop-color="#118a4a"/></linearGradient></defs>'
+      + '<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="var(--line)" stroke-width="14"/>'
+      + '<circle cx="70" cy="70" r="'+r+'" fill="none" stroke="url(#zrg)" stroke-width="14" stroke-linecap="round" stroke-dasharray="'+(c*p/100).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 70 70)"/>'
+      + '<text x="70" y="74" text-anchor="middle" font-size="26" font-weight="700" fill="var(--ink)" font-family="Inter,sans-serif">'+p.toFixed(1)+'%</text>'
+      + '<text x="70" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter,sans-serif">COLLECTED</text></svg>';
+  }
+  function render(zone){
+    const c = document.getElementById('zoneCar'); if(!c || !zone) return;
+    const ms = zone.muqamat.map(m=>{ const w = m.wasooli||0, b = Math.max(0,m.baqaya||0); return {n:m.name, w, b, t:w+b, a:m.arkan||0}; });
+    const W = ms.reduce((a,x)=>a+x.w,0), B = ms.reduce((a,x)=>a+x.b,0), T = W+B, P = T ? W/T*100 : 0, A = ms.reduce((a,x)=>a+x.a,0);
+    const slide = html=>'<div class="dash-card dash-slide">'+html+'</div>';
+    const s1 = '<p class="dash-title urdu">مالیات وصولی — '+zone.name+'</p><p class="dash-sub urdu">'+ms.length+' مقامات • '+A+' ارکان</p><div class="zd-ring">'+ring(P)+'</div>'
+      + '<div class="fd-kpi urdu"><div class="g"><b>'+fmt(W)+'</b><span>کل وصولی</span></div><div class="r"><b>'+fmt(B)+'</b><span>کل باقی</span></div><div class="p"><b>'+fmt(T)+'</b><span>کل واجب الادا</span></div></div>';
+    const top = ms.slice().sort((x,y)=>(y.t?y.w/y.t:0)-(x.t?x.w/x.t:0)).slice(0,8);
+    const s2 = '<p class="dash-title urdu">مقام وار وصولی (بہترین 8)</p><p class="dash-sub urdu">فی صد وصولی کے مطابق</p>'
+      + top.map(x=>bar(x.n, x.t?x.w/x.t*100:0, (x.t?(x.w/x.t*100):0).toFixed(1)+'%', fmt(x.w)+' / '+fmt(x.t))).join('');
+    const COL = ZONE_COLORS, bl = ms.slice().sort((x,y)=>y.b-x.b), top5 = bl.slice(0,5), rest = bl.slice(5).reduce((a,x)=>a+x.b,0);
+    const parts = top5.map(x=>({n:x.n, v:x.b})).concat(rest>0 ? [{n:'دیگر مقامات', v:rest}] : []);
+    let ang = -Math.PI/2, paths = '', leg = '';
+    parts.forEach((x,i)=>{ const f = B ? x.v/B : 0, sw = f*Math.PI*2;
+      if(f>0.0005) paths += '<path d="'+describeArc(100,100,90,ang,ang+Math.min(sw,Math.PI*2-0.001))+'" fill="'+COL[i%COL.length]+'" stroke="var(--panel)" stroke-width="2"/>';
+      ang += sw; leg += '<li><span class="dot" style="background:'+COL[i%COL.length]+'"></span><span class="lz urdu">'+x.n+'</span><span class="lp">'+cmp(x.v)+' • '+(B?(x.v/B*100).toFixed(0):0)+'%</span></li>'; });
+    const s3 = '<p class="dash-title urdu">مقام وار باقی بقایاجات</p><p class="dash-sub urdu">کل باقی: '+fmt(B)+'</p><div class="dash-chart-wrap">'
+      + (B ? '<svg viewBox="0 0 200 200" width="200" height="200">'+paths+'<circle cx="100" cy="100" r="52" fill="var(--panel)"/><text x="100" y="98" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)">'+cmp(B)+'</text><text x="100" y="116" text-anchor="middle" font-size="10" fill="var(--muted)">BAQAYA</text></svg>' : '<p class="dash-sub urdu" style="padding:40px 0;">کوئی باقی نہیں</p>')
+      + '</div><ul class="dash-legend">'+leg+'</ul>';
+    const mx = Math.max.apply(null, ms.map(x=>x.a).concat([1])), ta = ms.slice().sort((x,y)=>y.a-x.a).slice(0,8);
+    const s4 = '<p class="dash-title urdu">مقام وار ارکان (سب سے زیادہ 8)</p><p class="dash-sub urdu">کل ارکان: '+A+'</p>'
+      + ta.map(x=>bar(x.n, x.a/mx*100, x.a+' ارکان', fmt(x.a*4800)+' سالانہ اعانت')).join('');
+    const keep = c.scrollLeft;
+    c.innerHTML = [s1,s2,s3,s4].map(slide).join('');
+    c.scrollLeft = keep; setup();
+  }
+  function go(i){ const c = document.getElementById('zoneCar'); const dir = getComputedStyle(c).direction==='rtl' ? -1 : 1; c.scrollTo({left:dir*i*c.clientWidth, behavior:'smooth'}); }
+  function setup(){
+    const c = document.getElementById('zoneCar'), d = document.getElementById('zoneDots'); if(!c || !d || c._ok) return; c._ok = true;
+    const n = 4, idx = ()=>Math.round(Math.abs(c.scrollLeft)/(c.clientWidth||1));
+    d.innerHTML = Array.from({length:n}, (_,i)=>'<i data-i="'+i+'"></i>').join('');
+    const paint = ()=>Array.prototype.forEach.call(d.children, (x,i)=>x.classList.toggle('on', i===idx()));
+    c.addEventListener('scroll', ()=>{ clearTimeout(c._t); c._t = setTimeout(paint, 60); }, {passive:true});
+    d.addEventListener('click', e=>{ if(e.target.dataset && e.target.dataset.i!==undefined) go(Number(e.target.dataset.i)); });
+    ['pointerdown','touchstart','wheel'].forEach(ev=>c.addEventListener(ev, ()=>{ c._pause = Date.now()+15000; }, {passive:true}));
+    setInterval(()=>{ if(document.hidden || c.offsetParent===null || Date.now() < (c._pause||0)) return; go((idx()+1)%n); }, 7000);
+    setTimeout(paint, 150);
+  }
+  const _rh = window.renderHisab;
+  window.renderHisab = function(zone){ const r = _rh.apply(this, arguments); try{ render(zone); }catch(e){} return r; };
+})();
+</script>
+<script>
+// سلائیڈ کی اونچائی کے مطابق خالی جگہ خود ختم
+(function(){
+  function fit(c){ if(!c || !c.clientWidth) return; const i = Math.round(Math.abs(c.scrollLeft)/c.clientWidth), k = c.children[i]; if(k && k.offsetHeight) c.style.height = k.offsetHeight + 'px'; }
+  function all(){ ['dashCar','zoneCar'].forEach(id=>fit(document.getElementById(id))); }
+  ['dashCar','zoneCar'].forEach(id=>{ const c = document.getElementById(id); if(c) c.addEventListener('scroll', ()=>{ clearTimeout(c._f); c._f = setTimeout(()=>fit(c), 120); }, {passive:true}); });
+  window.addEventListener('resize', all); setInterval(all, 600);
+})();
+</script>
+<script>
+// ================== رپورٹس: ایڈمن فارم بنائے، زونز بھر کر جمع کرائیں ==================
+(function(){
+  const mem = {};
+  const LS = {
+    get(k,d){ try{ const v=localStorage.getItem(k); return v===null?d:JSON.parse(v);}catch(e){ return mem[k]!==undefined?mem[k]:d; } },
+    set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){ mem[k]=v; } }
+  };
+  const $ = id=>document.getElementById(id);
+  const esc = t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const N = v=>Number(v)||0;
+  const today = ()=>{ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); };
+  const zname = id=>{ const z = DATA.zones.find(x=>x.id===id); return z ? z.name : id; };
+  let fs = LS.get('jid_rf_s',[]), fp = LS.get('jid_rf_p',{}), fd = LS.get('jid_rf_d',[]), ds = LS.get('jid_rd_s',[]), dp = LS.get('jid_rd_p',{});
+  let st = {f:null, z:null}, draft = {}, editing = false;
+  const J = v=>{ try{ return typeof v==='string' ? JSON.parse(v||'null') : v; }catch(_){ return null; } };
+  function save(){ LS.set('jid_rf_s',fs); LS.set('jid_rf_p',fp); LS.set('jid_rf_d',fd); LS.set('jid_rd_s',ds); LS.set('jid_rd_p',dp); }
+  function post(obj){
+    const api = window.__api; if(!api || !api.url()) return Promise.resolve();
+    return fetch(api.url(), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({key:api.key()}, obj))}).catch(()=>{});
+  }
+  function sync(){ if(window.__api) setTimeout(window.__api.sync, 3000); }
+  function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2800); }
+  function forms(){ const m = {}; fs.forEach(f=>m[f.id]=f); Object.keys(fp).forEach(k=>m[k]=fp[k]); return Object.keys(m).map(k=>m[k]).filter(f=>fd.indexOf(f.id)<0).sort((a,b)=>b.created-a.created); }
+  function subs(){ const m = {}; ds.forEach(d=>m[d.id]=d); Object.keys(dp).forEach(k=>m[k]=dp[k]); return m; }
+  window.__onReports = function(F, D){
+    if(Array.isArray(F)){
+      fs = F.map(f=>({id:String(f.id), kind:String(f.kind||'std'), title:String(f.title||''), from:String(f.from||''), to:String(f.to||''), fields:J(f.fields)||[], created:Number(f.created)||0, t:Number(f.t)||0}));
+      const sm = {}; fs.forEach(f=>sm[f.id]=f);
+      Object.keys(fp).forEach(id=>{ if(sm[id] && sm[id].t >= fp[id].t) delete fp[id]; }); fd = fd.filter(id=>sm[id]);
+    }
+    if(Array.isArray(D)){
+      ds = D.map(d=>({id:String(d.id), form:String(d.form), zone:String(d.zone), data:J(d.data)||{}, st:String(d.st||'draft'), t:Number(d.t)||0}));
+      const sm = {}; ds.forEach(d=>sm[d.id]=d);
+      Object.keys(dp).forEach(id=>{ if(sm[id] && sm[id].t >= dp[id].t) delete dp[id]; });
+    }
+    save(); Object.keys(fp).forEach(id=>post({action:'rf_save', f:fp[id]})); fd.forEach(id=>post({action:'rf_del', id})); Object.keys(dp).forEach(id=>post({action:'rd_save', d:dp[id]}));
+    if(activePage==='reports' && currentZone!==null && !editing) renderRep();
+  };
+
+  // ----- فارم کا ڈھانچہ (چھپے ہوئے فارم کے مطابق) -----
+  const MAN = ['ارکان (مرد)','امیدواران رکنیت (مرد)','کارکنان (مرد)','ممبرز (مرد)'], JIY = ['یونٹس (جہاں نظم قائم ہوا)','کارکنان / ممبرز'];
+  const INFO = [['نام زون / مقام','nm'],['نام امیر','am'],['نام قیم','qm'],['کل زونل / مقامی جماعتیں','n1'],['کل حلقہ کارکنان','n2'],['کل بلاک کوڈ / محلہ / مسجد تنظیمیں','n3']];
+  const COM = [['ہدف عوامی کمیٹیاں','c0'],['بنائے گئے عوامی کمیٹیوں کی تعداد','c1'],['ممبرز کنونشن طے شدہ','c2'],['منعقدہ ممبرز کنونشن','c3']];
+  const PROG = ['امیر زون کے تنظیمی دورے','اجلاسات زونل / مقامی نظم','زونل اجتماعات ارکان','مقامی اجتماعات ارکان (مقامات، سہ ماہی ×1)','مقامی تربیتی اجتماعات ہفتہ وار (مقامات ×3)','وفود برائے اجتماعات (مقامات ×1)','ملاقاتیں نئے خاندانوں سے (مقامات ×10)','اجتماعات عام ماہانہ (مقامات ×1)','فہم قرآن کلاسز','دروس قرآن','دورہ تفاسیر','زونل تربیتی اجتماع','مقامات خطبہ جمعہ','لائبریری / دار المطالعہ','سندی سرکل'];
+  const pct = (h,t)=> N(t) > 0 ? Math.round(N(h)/N(t)*100)+'%' : '-';
+  const tot = (d,p,r)=> N(d[p+r+'s']) + N(d[p+r+'a']) - N(d[p+r+'l']);
+
+  function repHTML(f, d, edit){
+    const c = (k,num)=> edit ? '<input class="rp-i" data-k="'+k+'" '+(num?'inputmode="numeric"':'')+' value="'+esc(d[k])+'">' : esc(d[k]===undefined||d[k]===''?'-':d[k]);
+    const head = '<div class="rp-h urdu">جماعت اسلامی ضلع دیر پائین<div>'+(f.kind==='std' ? 'زون / مقامی کارکردگی رپورٹ خاکہ' : esc(f.title))+' — از '+esc(f.from||'-')+' تا '+esc(f.to||'-')+'</div>'+(f.kind==='std'?'<div>'+esc(f.title)+'</div>':'')+'</div>';
+    if(f.kind!=='std'){
+      return head + '<table class="rp-t urdu">' + (f.fields||[]).map((x,i)=>'<tr><td>'+esc(x.l)+'</td><td>'+c('f'+i, x.n)+'</td></tr>').join('') + '</table>';
+    }
+    const grid = (names,p,hd)=>'<table class="rp-t urdu"><tr><th>'+hd+'</th><th>آغاز میں</th><th>اضافہ</th><th>کمی</th><th>موجودہ کل</th></tr>'
+      + names.map((n,r)=>'<tr><td>'+n+'</td><td>'+c(p+r+'s',1)+'</td><td>'+c(p+r+'a',1)+'</td><td>'+c(p+r+'l',1)+'</td><td id="rt-'+p+r+'"><b>'+tot(d,p,r)+'</b></td></tr>').join('') + '</table>';
+    return head
+      + '<div class="rp-sec urdu">ابتدائی معلومات</div><div class="rp-info urdu">'+INFO.map(x=>'<label><span>'+x[0]+'</span>'+c(x[1], x[1][0]==='n')+'</label>').join('')+'</div>'
+      + '<div class="rp-sec urdu">افرادی قوت</div>'+grid(MAN,'m','کیٹیگری')
+      + '<div class="rp-sec urdu">عوامی کمیٹیاں</div><table class="rp-t urdu"><tr>'+COM.map(x=>'<th>'+x[0]+'</th>').join('')+'</tr><tr>'+COM.map(x=>'<td>'+c(x[1],1)+'</td>').join('')+'</tr></table>'
+      + '<div class="rp-sec urdu">جے آئی یوتھ</div>'+grid(JIY,'y','')
+      + '<div class="rp-sec urdu">پروگرامات</div><table class="rp-t urdu"><tr><th>پروگرام کی نوعیت</th><th>طے شدہ</th><th>ہوئے</th><th>حاضری</th><th>اوسط حاضری</th><th>فیصدی</th></tr>'
+      + PROG.map((n,r)=>'<tr><td>'+n+'</td><td>'+c('p'+r+'t',1)+'</td><td>'+c('p'+r+'h',1)+'</td><td>'+c('p'+r+'a',0)+'</td><td>'+c('p'+r+'v',1)+'</td><td id="rt-pp'+r+'"><b>'+pct(d['p'+r+'h'],d['p'+r+'t'])+'</b></td></tr>').join('') + '</table>';
+  }
+  function calc(){
+    ['m','y'].forEach(p=>(p==='m'?MAN:JIY).forEach((_,r)=>{ const e = $('rt-'+p+r); if(e) e.innerHTML = '<b>'+tot(draft,p,r)+'</b>'; }));
+    PROG.forEach((_,r)=>{ const e = $('rt-pp'+r); if(e) e.innerHTML = '<b>'+pct(draft['p'+r+'h'],draft['p'+r+'t'])+'</b>'; });
+  }
+  function aggregate(f){
+    const out = {}, sent = Object.values(subs()).filter(x=>x.form===f.id && x.st==='sent'), numeric = k=> f.kind==='std' ? (!/^(nm|am|qm)$/.test(k) && !/^p\d+a$/.test(k)) : (f.fields[Number(k.slice(1))]||{}).n;
+    sent.forEach(s=>Object.keys(s.data).forEach(k=>{ if(numeric(k)) out[k] = N(out[k]) + N(s.data[k]); }));
+    if(f.kind==='std'){ out.nm = 'تمام زونز ('+sent.length+')'; }
+    return out;
+  }
+  function defaults(f, z){
+    const zo = DATA.zones.find(x=>x.id===z) || {muqamat:[]}; if(f.kind!=='std') return {};
+    const ark = (AR_DATA[z]||[]).reduce((a,g)=>a+g.mem.length,0);
+    return {nm: zo.name||'', am: zo.ameer||'', n1: zo.muqamat.length, m0s: ark};
+  }
+  async function pdf(html, name){
+    toast('PDF بن رہی ہے…');
+    try{
+      const blob = await generatePdfBlob({__rep:true, html});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 20000);
+    }catch(e){ toast('PDF نہیں بن سکی'); }
+  }
+
+  // ----- صفحہ -----
+  window.renderRep = function(){
+    const box = $('repPage'); if(!box) return;
+    const admin = window.__role==='admin', canW = admin && !window.__ro, S = subs();
+    if(st.f){
+      const f = forms().find(x=>x.id===st.f); if(!f){ st = {f:null, z:null}; return renderRep(); }
+      const back = '<button class="tab-btn urdu" style="margin-bottom:10px;" onclick="repBack()">↩ واپس</button>';
+      if(st.z){
+        const own = window.__role==='zone' && st.z===window.__zone, rec = S[f.id+'~'+st.z];
+        if(own){ editing = true; if(!draft._f || draft._f!==f.id){ draft = Object.assign(defaults(f, st.z), rec ? rec.data : {}, {_f:f.id}); } }
+        const data = own ? draft : (rec ? rec.data : {});
+        box.innerHTML = back + '<div class="rp-box">' + repHTML(f, data, own) + '</div>'
+          + (own ? '<button class="sheet-btn dep urdu" onclick="repSave(\'sent\')"><span class="ic">📤</span> رپورٹ جمع کرائیں</button><button class="tab-btn urdu" style="width:100%;margin-top:8px;" onclick="repSave(\'draft\')">💾 مسودہ محفوظ کریں</button>'
+            : '<button class="tab-btn urdu" style="width:100%;" onclick="repPdf(\''+f.id+'\',\''+st.z+'\')">📄 PDF</button>');
+        if(own) calc();
+        return;
+      }
+      editing = false;
+      if(admin){
+        const rows = DATA.zones.map(z=>{ const r = S[f.id+'~'+z.id]; const s = r ? (r.st==='sent' ? '<span class="rp-st ok urdu">✅ جمع</span>' : '<span class="rp-st dr urdu">✏️ مسودہ</span>') : '<span class="rp-st urdu">باقی</span>';
+          return '<div class="rp-box rp-row" style="cursor:pointer;margin-bottom:8px;" onclick="repZone(\''+f.id+'\',\''+z.id+'\')"><b class="urdu">'+esc(z.name)+'</b>'+s+'</div>'; }).join('');
+        box.innerHTML = back + '<h2 class="section-title urdu">'+esc(f.title)+'</h2>'
+          + '<button class="tab-btn urdu" style="width:100%;margin-bottom:8px;" onclick="repAgg(\''+f.id+'\')">📊 مجموعی رپورٹ (تمام زونز) + PDF</button>' + rows;
+        return;
+      }
+    }
+    editing = false;
+    const list = forms();
+    const comp = canW ? `<div class="rp-box"><h2 class="section-title urdu" style="margin-top:0;">نیا فارم بنائیں</h2>
+      <label class="dep-field"><span class="urdu">فارم کی قسم</span><select id="rfKind" class="urdu" onchange="repKindCh()"><option value="std">کارکردگی رپورٹ (معیاری فارم)</option><option value="custom">سادہ فارم (اپنے خانے)</option></select></label>
+      <label class="dep-field"><span class="urdu">عنوان</span><input id="rfTitle" class="urdu" placeholder="مثلاً: ماہانہ کارکردگی رپورٹ — نومبر"></label>
+      <div class="dep-row"><label class="dep-field"><span class="urdu">از</span><input type="date" id="rfFrom"></label><label class="dep-field"><span class="urdu">تا</span><input type="date" id="rfTo"></label></div>
+      <label class="dep-field" id="rfFieldsW" style="display:none;"><span class="urdu">خانے (ہر سطر ایک خانہ؛ عدد والے خانے سے پہلے # لکھیں)</span><textarea id="rfFields" class="urdu" style="min-height:90px;width:100%;box-sizing:border-box;" placeholder="#کل ارکان&#10;#نئے ارکان&#10;کوئی تجویز"></textarea></label>
+      <button class="sheet-btn dep urdu" onclick="repCreate()"><span class="ic">➕</span> فارم بنائیں اور زونز کو بھیجیں</button></div>` : '';
+    box.innerHTML = comp + '<h2 class="section-title urdu">رپورٹس</h2>' + (list.map(f=>{
+      const mine = S[f.id+'~'+window.__zone], n = Object.values(S).filter(x=>x.form===f.id && x.st==='sent').length;
+      const stat = admin ? '<span class="rp-st urdu">جمع: '+n+' / '+DATA.zones.length+'</span>' : (mine ? (mine.st==='sent' ? '<span class="rp-st ok urdu">✅ جمع</span>' : '<span class="rp-st dr urdu">✏️ مسودہ</span>') : '<span class="rp-st urdu">باقی</span>');
+      return '<div class="rp-box"><div class="rp-row"><div><b class="urdu">'+esc(f.title)+'</b><div class="cand-sub urdu" style="direction:ltr;text-align:right;">'+esc(f.from||'')+' → '+esc(f.to||'')+'</div></div>'+stat+'</div>'
+        + '<div class="cand-actions urdu"><button onclick="repOpen(\''+f.id+'\')">'+(admin?'👁 دیکھیں':'✏️ رپورٹ بھریں')+'</button>'+(canW?'<button class="del" onclick="repDel(\''+f.id+'\')">🗑</button>':'')+'</div></div>'; }).join('') || '<div class="n-empty urdu">ابھی کوئی فارم موجود نہیں</div>');
+  };
+  window.repKindCh = function(){ $('rfFieldsW').style.display = $('rfKind').value==='custom' ? 'block' : 'none'; };
+  window.repOpen = function(id){ st = {f:id, z: window.__role==='zone' ? window.__zone : null}; draft = {}; renderRep(); };
+  window.repZone = function(f,z){ st = {f, z}; renderRep(); };
+  window.repBack = function(){ if(st.z && window.__role!=='zone') st.z = null; else st = {f:null, z:null}; editing = false; draft = {}; renderRep(); };
+  window.repCreate = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const title = $('rfTitle').value.trim(), kind = $('rfKind').value; if(!title){ toast('فارم کا عنوان لکھیں'); return; }
+    const fields = kind==='custom' ? $('rfFields').value.split('\n').map(x=>x.trim()).filter(Boolean).map(x=>x[0]==='#' ? {l:x.slice(1).trim(), n:1} : {l:x, n:0}) : [];
+    if(kind==='custom' && !fields.length){ toast('کم از کم ایک خانہ لکھیں'); return; }
+    const now = Date.now(), f = {id:now.toString(36)+Math.random().toString(36).slice(2,5), kind, title, from:$('rfFrom').value, to:$('rfTo').value, fields, created:now, t:now};
+    fp[f.id] = f; save(); renderRep(); toast('فارم بن گیا، زونز کو نظر آئے گا ✓'); post({action:'rf_save', f}).then(sync);
+  };
+  window.repDel = function(id){
+    if(window.__ro || !confirm('یہ فارم اور اس کی رپورٹس حذف کریں؟')) return;
+    delete fp[id]; if(fd.indexOf(id)<0) fd.push(id); save(); renderRep(); post({action:'rf_del', id}).then(sync);
+  };
+  window.repSave = function(state){
+    const f = forms().find(x=>x.id===st.f); if(!f || window.__role!=='zone') return;
+    const data = Object.assign({}, draft); delete data._f;
+    const rec = {id:f.id+'~'+st.z, form:f.id, zone:st.z, data, st:state, t:Date.now()};
+    dp[rec.id] = rec; save(); post({action:'rd_save', d:rec}).then(sync);
+    toast(state==='sent' ? 'رپورٹ جمع ہو گئی ✓' : 'مسودہ محفوظ ہو گیا ✓');
+    if(state==='sent'){ st = {f:null, z:null}; editing = false; draft = {}; renderRep(); }
+  };
+  window.repAgg = function(id){
+    const f = forms().find(x=>x.id===id); if(!f) return;
+    const html = repHTML(f, aggregate(f), false);
+    $('repPage').innerHTML = '<button class="tab-btn urdu" style="margin-bottom:10px;" onclick="repBack()">↩ واپس</button><div class="rp-box">'+html+'</div><button class="tab-btn urdu" style="width:100%;" onclick="repPdfAgg(\''+id+'\')">📄 PDF</button>';
+  };
+  window.repPdfAgg = function(id){ const f = forms().find(x=>x.id===id); if(f) pdf(repHTML(f, aggregate(f), false), 'report-all-zones.pdf'); };
+  window.repPdf = function(id, z){ const f = forms().find(x=>x.id===id), r = subs()[id+'~'+z]; if(f) pdf(repHTML(f, r ? r.data : {}, false), 'report-'+z+'.pdf'); };
+  window.openRepFromLanding = function(){ currentZone = DATA.zones[0].id; st = {f:null, z:null}; switchPage('reports'); };
+  document.addEventListener('input', e=>{ const k = e.target && e.target.dataset && e.target.dataset.k; if(k && editing){ draft[k] = e.target.value; calc(); } });
 })();
 </script>
 <script>
