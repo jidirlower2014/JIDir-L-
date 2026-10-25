@@ -5406,6 +5406,7 @@ function togglePw(){
   window.repKindCh = function(){ $('rfFieldsW').style.display = $('rfKind').value==='custom' ? 'block' : 'none'; };
   window.repOpen = function(id){ st = {f:id, z: window.__role==='zone' ? window.__zone : null}; draft = {}; renderRep(); };
   window.repZone = function(f,z){ st = {f, z}; renderRep(); };
+  window.__repDepth = function(){ return st.f ? 1 : 0; };
   window.repBack = function(){ if(st.z && window.__role!=='zone') st.z = null; else st = {f:null, z:null}; editing = false; draft = {}; renderRep(); };
   window.repCreate = function(){
     if(window.__role!=='admin' || window.__ro) return;
@@ -5436,6 +5437,40 @@ function togglePw(){
   window.repPdf = function(id, z){ const f = forms().find(x=>x.id===id), r = subs()[id+'~'+z]; if(f) pdf(repHTML(f, r ? r.data : {}, false), 'report-'+z+'.pdf'); };
   window.openRepFromLanding = function(){ currentZone = DATA.zones[0].id; st = {f:null, z:null}; switchPage('reports'); };
   document.addEventListener('input', e=>{ const k = e.target && e.target.dataset && e.target.dataset.k; if(k && editing){ draft[k] = e.target.value; calc(); } });
+})();
+</script>
+<script>
+// ================== بیک بٹن: قدم بہ قدم واپسی، ہوم پر دو بار دبانے سے ایپ بند ==================
+(function(){
+  const CLOSERS = {depOverlay:'closeDeposit', arkDelOverlay:'arkDelClose', arkEditOverlay:'arkEditClose', arkAddOverlay:'arkAddClose', finEditOverlay:'finEditClose',
+                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme'};
+  let exitAt = 0;
+  const $ = id=>document.getElementById(id);
+  function toast(m){ const t = $('depToast'); if(!t) return; t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2000); }
+  function handleBack(){
+    // 1) کھلے ہوئے ڈائیلاگ / شیٹس
+    const wel = $('welcomeOverlay'); if(wel && wel.classList.contains('open')){ closeWelcome(); return true; }
+    const rep = $('arkRep'); if(rep && rep.style.display==='block'){ closeArkRep(); return true; }
+    const open = document.querySelector('.sheet-overlay.open, .print-overlay.open');
+    if(open){ const fn = CLOSERS[open.id]; if(fn && typeof window[fn]==='function') window[fn](); else open.classList.remove('open'); return true; }
+    // 2) تفصیل کی سکرینیں
+    if($('hisabDetail') && $('hisabDetail').classList.contains('open')){ closeHisabDetail(); return true; }
+    if($('arkanDetail') && $('arkanDetail').classList.contains('open')){ closeArkanDetail(); return true; }
+    // 3) رپورٹس کے اندر
+    if(typeof activePage!=='undefined' && activePage==='reports' && window.__repDepth && window.__repDepth()){ repBack(); return true; }
+    // 4) زون سے ہوم
+    if(window.__role==='zone'){ if(activePage!=='hisab'){ switchPage('hisab'); return true; } return false; }
+    if(currentZone !== null){ showLanding(); return true; }
+    return false;
+  }
+  function arm(){ history.pushState({g:1}, ''); }
+  history.replaceState({base:1}, ''); arm();
+  window.addEventListener('popstate', ()=>{
+    if(handleBack()){ arm(); return; }
+    const now = Date.now();
+    if(now - exitAt < 2200){ exitAt = 0; history.back(); return; }      // دوسری بار: ایپ بند
+    exitAt = now; toast('ایپ بند کرنے کے لیے دوبارہ بیک دبائیں'); arm();
+  });
 })();
 </script>
 <script>
