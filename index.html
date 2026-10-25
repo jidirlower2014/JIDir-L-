@@ -478,6 +478,8 @@ header h1{line-height:1.35 !important; margin:0 0 1px !important; font-size:clam
 header #crumb{line-height:1.5 !important; font-size:clamp(11px,3vw,14px) !important;}
 .flag-badge{width:86px !important; height:62px !important; object-fit:cover; object-position:center; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));}
 #logoutBtn, #themeBtn, #syncBtn, #installBtn2{margin:2px 0 0 5px !important; padding:1px 9px !important; font-size:10.5px !important; line-height:1.7 !important;}
+.sheet-btn.gold{background:linear-gradient(135deg,#ffe9a6,#f3c04d) !important; color:#5a3d00 !important; border-color:#d9a441 !important; box-shadow:0 6px 16px rgba(217,164,65,.35);}
+body.ro #candPage .sheet-btn.gold, body.ro #candPage .cand-form{display:none !important;}
 </style>
 </head>
 <body>
@@ -3514,8 +3516,8 @@ function renderAll(){
   if(activePage==='hisab') renderHisab(zone);
   else if(activePage==='umara'){ if(umaraSub==='zonal') renderZonalUmara(); else renderUmaraPage(zone); }
   else if(activePage==='notif') renderNotifPage();
-  else if(activePage==='cands') renderCandPage();
-  else if(activePage==='reports') renderRep();
+  else if(activePage==='cands'){ if(!(window.__candBusy && window.__candBusy())) renderCandPage(); }
+  else if(activePage==='reports'){ if(!(window.__repBusy && window.__repBusy())) renderRep(); }
   else renderArkanPage(zone);
 }
 
@@ -4494,6 +4496,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   function sync(){ if(window.__api) setTimeout(window.__api.sync, 3000); }
   function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',3200); }
 
+  window.__candBusy = function(){ return formOpen || !!attId; };
   window.__onCands = function(l){
     if(!Array.isArray(l)) return;
     server = l.map(c=>({id:String(c.id), zone:String(c.zone), name:String(c.name), father:String(c.father||''), vc:String(c.vc||''), phone:String(c.phone||''),
@@ -4533,7 +4536,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     box.innerHTML = `<div class="cand-sum urdu"><div><b>${l.length}</b><span>کل امیدواران</span></div><div><b>${pc}</b><span>زیرِ جائزہ</span></div><div><b>${ready}</b><span>اہل</span></div><div><b>${done}</b><span>رکن بن گئے</span></div></div>
       ${fz}
       <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candPdf()">📄 PDF بنائیں / پرنٹ (25 فی صفحہ)</button>
-      <button class="sheet-btn dep urdu" onclick="candForm()"><span class="ic">➕</span> نیا امیدوار شامل کریں</button>
+      <button class="sheet-btn gold urdu" onclick="candForm()"><span class="ic">➕</span> نیا امیدوار شامل کریں</button>
       <div class="cand-form" style="display:${formOpen?'block':'none'};">
         <label class="dep-field"><span class="urdu">نام *</span><input id="cName" class="urdu"></label>
         <label class="dep-field"><span class="urdu">ولدیت *</span><input id="cFather" class="urdu"></label>
@@ -4542,7 +4545,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
         ${zsel}
         <label class="dep-field"><span class="urdu">مقام</span><select id="cMuqam" class="urdu">${mo(admin ? dz : (window.__zone||dz))}</select></label>
         <label class="dep-field"><span class="urdu">نوٹ (اختیاری)</span><input id="cNote" class="urdu"></label>
-        <button class="sheet-btn dep urdu" style="margin-bottom:0;" onclick="candSave()"><span class="ic">✅</span> محفوظ کریں</button></div>
+        <button class="sheet-btn gold urdu" style="margin-bottom:0;" onclick="candSave()"><span class="ic">✅</span> محفوظ کریں</button></div>
       <div class="cand-filter">${chip('all','سب')}${chip('pending','زیرِ جائزہ')}${chip('ready','اہل')}${chip('approved','رکن بن گئے')}</div>
       <h2 class="section-title urdu">امیدواران رکنیت — ${zf==='all'&&admin?'تمام زونز':esc(zname(admin?zf:window.__zone))}</h2>${cards}`;
   };
@@ -4702,12 +4705,17 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   }
   window.__onArkLog = function(list){
     if(!Array.isArray(list)) return;
+    const prevSig = JSON.stringify(server);
     server = list.map(e=>({id:String(e.id), type:String(e.type), reason:String(e.reason||''), zone:String(e.zone), muqam:String(e.muqam||''),
       n:String(e.n||''), f:String(e.f||''), c:String(e.c||''), key:String(e.key||''), date:String(e.date||''), t:Number(e.t)||0,
       x:(function(v){ try{ return typeof v==='string' ? JSON.parse(v||'{}') : (v||{}); }catch(_){ return {}; } })(e.x)}));
     const ids = new Set(server.map(e=>e.id));
+    const pBefore = Object.keys(pend).length;
     Object.keys(pend).forEach(id=>{ if(ids.has(id)) delete pend[id]; });
-    save(); Object.keys(pend).forEach(id=>post(pend[id])); rebuild();
+    const pruned = pBefore !== Object.keys(pend).length;
+    save(); Object.keys(pend).forEach(id=>post(pend[id]));
+    if(!pruned && prevSig === JSON.stringify(server)) return;
+    rebuild();
   };
   function addEvent(e){
     e.zn = zname(e.zone); pend[e.id] = e; save(); rebuild();
@@ -5187,6 +5195,11 @@ function togglePw(){
   function toast(m){ const t=$('depToast'); t.textContent=m; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',2800); }
   function forms(){ const m = {}; fs.forEach(f=>m[f.id]=f); Object.keys(fp).forEach(k=>m[k]=fp[k]); return Object.keys(m).map(k=>m[k]).filter(f=>fd.indexOf(f.id)<0).sort((a,b)=>b.created-a.created); }
   function subs(){ const m = {}; ds.forEach(d=>m[d.id]=d); Object.keys(dp).forEach(k=>m[k]=dp[k]); return m; }
+  window.__repBusy = function(){
+    const ae = document.activeElement, inRep = ae && $('repPage') && $('repPage').contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName);
+    const typed = ($('rfTitle') && $('rfTitle').value) || ($('rfFields') && $('rfFields').value);
+    return editing || inRep || !!typed;
+  };
   window.__onReports = function(F, D){
     if(Array.isArray(F)){
       fs = F.map(f=>({id:String(f.id), kind:String(f.kind||'std'), title:String(f.title||''), from:String(f.from||''), to:String(f.to||''), fields:J(f.fields)||[], created:Number(f.created)||0, t:Number(f.t)||0}));
@@ -5261,7 +5274,7 @@ function togglePw(){
         if(own){ editing = true; if(!draft._f || draft._f!==f.id){ draft = Object.assign(defaults(f, st.z), rec ? rec.data : {}, {_f:f.id}); } }
         const data = own ? draft : (rec ? rec.data : {});
         box.innerHTML = back + '<div class="rp-box">' + repHTML(f, data, own) + '</div>'
-          + (own ? '<button class="sheet-btn dep urdu" onclick="repSave(\'sent\')"><span class="ic">📤</span> رپورٹ جمع کرائیں</button><button class="tab-btn urdu" style="width:100%;margin-top:8px;" onclick="repSave(\'draft\')">💾 مسودہ محفوظ کریں</button>'
+          + (own ? '<button class="sheet-btn gold urdu" onclick="repSave(\'sent\')"><span class="ic">📤</span> رپورٹ جمع کرائیں</button><button class="tab-btn urdu" style="width:100%;margin-top:8px;" onclick="repSave(\'draft\')">💾 مسودہ محفوظ کریں</button>'
             : '<button class="tab-btn urdu" style="width:100%;" onclick="repPdf(\''+f.id+'\',\''+st.z+'\')">📄 PDF</button>');
         if(own) calc();
         return;
