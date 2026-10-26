@@ -300,7 +300,9 @@ h2.section-title::before{content:''; position:absolute; right:0; top:18%; bottom
 .cand-actions{display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;}
 .cand-actions a,.cand-actions button{flex:1; text-align:center; padding:7px 4px; border-radius:10px; border:1px solid var(--teal); background:none; color:var(--teal); font-size:13px; text-decoration:none; cursor:pointer;}
 .cand-actions .del{border-color:var(--danger); color:var(--danger); flex:0 0 44px;}
-body.ro .sheet-btn.dep:not(#arkRepBtn), body.ro .n-composer, body.ro .n-del, body.ro .cand-actions button{display:none !important;}
+body.ro .sheet-btn.dep:not(#arkRepBtn):not(.fin-btn), body.ro .n-composer, body.ro .n-del{display:none !important;}
+body.ro:not(.perm-fin) .sheet-btn.dep.fin-btn{display:none !important;}
+body.ro:not(.perm-cand) .cand-actions button{display:none !important;}
 
 /* ===== PDF فہرست: جمیل نوری نستعلیق ===== */
 @font-face{font-family:'Jameel Noori Nastaleeq'; src:local('Jameel Noori Nastaleeq'), local('JameelNooriNastaleeq'), url('fonts/JameelNooriNastaleeq.ttf') format('truetype'); font-display:swap;}
@@ -479,7 +481,7 @@ header #crumb{line-height:1.5 !important; font-size:clamp(11px,3vw,14px) !import
 .flag-badge{width:86px !important; height:62px !important; object-fit:cover; object-position:center; filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));}
 #logoutBtn, #themeBtn, #syncBtn, #installBtn2{margin:2px 0 0 5px !important; padding:1px 9px !important; font-size:10.5px !important; line-height:1.7 !important;}
 .sheet-btn.gold{background:linear-gradient(135deg,#ffe9a6,#f3c04d) !important; color:#5a3d00 !important; border-color:#d9a441 !important; box-shadow:0 6px 16px rgba(217,164,65,.35);}
-body.ro #candPage .sheet-btn.gold, body.ro #candPage .cand-form{display:none !important;}
+body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #candPage .cand-form{display:none !important;}
 .cd-leg{display:flex; gap:12px; justify-content:center; font-size:12px; margin:2px 0 12px; flex-wrap:wrap;}
 .cd-leg i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-left:5px;}
 .cd-track{height:14px; border-radius:8px; background:var(--line); overflow:hidden; direction:rtl;}
@@ -574,8 +576,8 @@ body.ro #candPage .sheet-btn.gold, body.ro #candPage .cand-form{display:none !im
       <tr><td class="urdu">کل وصولی</td><td id="hdWasooli"></td></tr>
       <tr class="total"><td class="urdu">باقی</td><td id="hdBaqaya"></td></tr>
     </table>
-    <button class="sheet-btn dep urdu" onclick="openDeposit()"><span class="ic">💰</span> روپے جمع کریں</button>
-    <button class="sheet-btn dep urdu" onclick="finEditOpen()"><span class="ic">✏️</span> مالیاتی ریکارڈ میں ترمیم</button>
+    <button class="sheet-btn dep fin-btn urdu" onclick="openDeposit()"><span class="ic">💰</span> روپے جمع کریں</button>
+    <button class="sheet-btn dep fin-btn urdu" onclick="finEditOpen()"><span class="ic">✏️</span> مالیاتی ریکارڈ میں ترمیم</button>
     <button class="sheet-btn wa urdu" style="width:100%; justify-content:center;" onclick="sendHisabWhatsapp()"><span class="ic">📲</span> یہ ریکارڈ واٹس ایپ پر بھیجیں</button>
   </div>
 
@@ -3950,7 +3952,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
       { const am = (window.__ameerM||{})[m._key]; if(am && (!fe || am.t >= fe.t)){ m.ameer = am.n; m.contact = am.c; } }
       { const grp = m._g, cnt = grp ? grp.mem.length : (m.arkan||0);
-        if(grp) m.arkan = cnt; m.saalana = cnt * 4800; m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
+        if(grp) m.arkan = cnt; const ex = (fe && fe.ex) || 0, sm = fe && fe.sm; m.saalana = (sm!==undefined && sm!==null && sm!=='') ? Number(sm) : Math.max(0, cnt - ex) * 4800; m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
     });
     const seen = new Set();
     server.concat(pending).forEach(d=>{
@@ -4059,7 +4061,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
 
   window.openDeposit = function(){
-    if(window.__role !== 'admin' || window.__ro) return;
+    if(window.__role !== 'admin' || !window.__can('fin')) return;
     target = hisabTargetM; if(!target) return;
     $('depTitle').textContent = target.name;
     $('depSub').textContent = 'باقی: ' + fmt(target.baqaya);
@@ -4126,7 +4128,8 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">مقامی امیر</span><input id="fAmeer" class="urdu"></label>
     <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="fContact" type="tel" inputmode="tel"></label>
     <label class="dep-field"><span class="urdu">سابقہ بقایاجات</span><input id="fSabiqa" type="number" inputmode="numeric" min="0"></label>
-    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت (خودکار: ارکان × 4800)</span><input id="fSaalana" disabled type="number" inputmode="numeric" min="0"></label>
+    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت — دستی (خالی چھوڑیں تو ارکان × 4800 خود)</span><input id="fSaalana" type="number" inputmode="numeric" min="0" placeholder="خودکار"></label>
+    <label class="dep-field"><span class="urdu">قاصر / معاف ارکان کی تعداد (بیمار وغیرہ، ان کی اعانت نہیں لگے گی)</span><input id="fEx" type="number" inputmode="numeric" min="0"></label>
     <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
     <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="finEditClose()">منسوخ</button>
@@ -4549,10 +4552,11 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
           ${c.phone?`<a href="tel:${esc(c.phone.replace(/[^0-9+]/g,''))}">📞 کال</a>`:''}
           ${wa?`<a target="_blank" rel="noopener" href="https://wa.me/${wa}">💬 واٹس ایپ</a>`:''}
           ${(admin && !ok)?`<button onclick="candAtt('${c.id}')">📋 حاضری</button><button onclick="candStatus('${c.id}')">✔ رکن بنائیں</button>`:''}
-          <button onclick="candEdit('${c.id}')">✏️ ترمیم</button><button class="del" onclick="candDel('${c.id}')">🗑</button></div></div>`;
+          ${c.phone?`<button onclick="candWelcome('${c.id}')">🌹 خوش آمدید</button>`:''}<button onclick="candEdit('${c.id}')">✏️ ترمیم</button><button class="del" onclick="candDel('${c.id}')">🗑</button></div></div>`;
     }).join('') || '<div class="n-empty urdu">کوئی امیدوار موجود نہیں</div>';
     box.innerHTML = candDash(l) + `<div class="cand-sum urdu"><div><b>${l.length}</b><span>کل امیدواران</span></div><div><b>${pc}</b><span>زیرِ جائزہ</span></div><div><b>${ready}</b><span>اہل</span></div><div><b>${done}</b><span>رکن بن گئے</span></div></div>
       ${fz}
+      <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candShow()">👁 فہرست سکرین پر دیکھیں</button>
       <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candPdf()">📄 امیدواران کی فہرست PDF (25 فی صفحہ)</button>
       <button class="tab-btn urdu" style="width:100%; margin:0 0 8px;" onclick="candSumPdf()">📊 ${admin?'زون وار':'مقام وار'} خلاصہ PDF</button>
       <button class="sheet-btn gold urdu" onclick="candForm()"><span class="ic">➕</span> نیا امیدوار شامل کریں</button>
@@ -4629,7 +4633,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   // ---------- امیدوار میں ترمیم ----------
   let editId = null;
   window.candEdit = function(id){
-    if(window.__ro) return;
+    if(!window.__can('cand')) return;
     const c = all().find(x=>x.id===id); if(!c) return;
     if(window.__role==='zone' && c.zone!==window.__zone) return;
     editId = id; const admin = window.__role==='admin';
@@ -4642,35 +4646,72 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
   window.candEditClose = function(){ $('candEditOverlay').classList.remove('open'); editId = null; };
   window.candEditSave = function(){
-    const c = all().find(x=>x.id===editId); if(!c || window.__ro) return;
+    const c = all().find(x=>x.id===editId); if(!c || !window.__can('cand')) return;
     const name = $('ceName').value.trim(), father = $('ceFather').value.trim(), vc = $('ceVc').value.trim();
     if(!name || !father || !vc){ toast('نام، ولدیت اور ویلج کونسل لکھنا ضروری ہے'); return; }
     const n = Object.assign({}, c, {name, father, vc, phone:$('cePhone').value.trim(), muqam:$('ceMuqam').value, note:$('ceNote').value.trim(), zone: window.__role==='admin' ? $('ceZone').value : c.zone, t:Date.now()});
     pend[c.id] = n; save(); candEditClose(); renderCandPage(); toast('ترمیم محفوظ ہو گئی ✓'); post({action:'cand_save', c:n}).then(sync);
+  };
+  const WELCOME_MSG = `🌹 خوش آمدید، مستقبل کے ساتھی! 🌹
+
+السلام علیکم ورحمۃ اللہ وبرکاتہ!
+
+✨ مبارک ہو! آپ نے ایک بامقصد سفر کا آغاز کیا ہے۔
+
+ہم آپ کو جماعت اسلامی کے قافلۂ دعوت و تربیت میں بطور امیدوارِ رکنیت شمولیت پر دل کی گہرائیوں سے خوش آمدید کہتے ہیں۔
+
+یہ محض ایک تنظیم سے وابستگی نہیں، بلکہ اللہ تعالیٰ کے دین کی سربلندی، اقامتِ دین کی جدوجہد اور معاشرے کی اصلاح کے لیے اپنی صلاحیتوں، وقت اور توانائیوں کو بروئے کار لانے کے ایک بامقصد سفر کا آغاز ہے۔
+
+ہمیں امید ہے کہ آپ کا جذبۂ ایمانی، اخلاص، عزم اور عملی جدوجہد اس قافلے کو مزید مضبوط بنانے میں اہم کردار ادا کریں گے۔
+
+🌱 آئیے! ہم مل کر اپنی ذات کی تعمیر کریں، اپنے کردار کو سنواریں، دعوتِ دین کو عام کریں اور ایک ایسے معاشرے کی تشکیل کے لیے جدوجہد کریں جو اللہ تعالیٰ کی رضا اور اس کے دین کی تعلیمات کے مطابق ہو۔
+
+اللہ تعالیٰ آپ کی اس وابستگی کو قبول فرمائے، استقامت عطا کرے اور ہمیں اخلاص و ثابت قدمی کے ساتھ دین کی خدمت کرنے کی توفیق بخشے۔ آمین یا رب العالمین! 🤲
+
+ایک بار پھر، جماعت اسلامی کے قافلۂ دعوت و تربیت میں آپ کو دل کی گہرائیوں سے خوش آمدید!
+
+والسلام
+مخلص،
+عطاء اللہ شاہین
+ناظم شعبہ تربیت
+جماعت اسلامی، ضلع دیر پائین`;
+  window.candWelcome = function(id){
+    const c = all().find(x=>x.id===id); if(!c) return;
+    const w = (typeof toWaNumber==='function') ? toWaNumber(c.phone) : '';
+    if(!w){ toast('اس امیدوار کا درست موبائل نمبر موجود نہیں'); return; }
+    const url = 'https://wa.me/' + w + '?text=' + encodeURIComponent(WELCOME_MSG);
+    const win = window.open(url, '_blank'); if(!win) window.location.href = url;
+  };
+  window.candShow = function(){
+    const l = list().slice().sort((a,b)=> zname(a.zone).localeCompare(zname(b.zone)) || a.created-b.created);
+    if(!l.length){ toast('کوئی امیدوار موجود نہیں'); return; }
+    const label = 'زون: ' + ((window.__role==='zone') ? zname(window.__zone) : (zf==='all' ? 'تمام زونز' : zname(zf)));
+    $('printSheet').innerHTML = buildCandHTML({list:l, label}); $('printOverlay').classList.add('open');
   };
   window.candZoneCh = function(){ $('cMuqam').innerHTML = mo($('cZone').value); };
   window.candZF = function(v){ zf = v; renderCandPage(); };
   window.candForm = function(){ formOpen = !formOpen; renderCandPage(); if(formOpen) setTimeout(()=>{ const n=$('cName'); if(n) n.focus(); },50); };
   window.candFilter = function(f){ filter = f; renderCandPage(); };
   window.candSave = function(){
-    if(window.__ro) return;
+    if(!window.__can('cand')) return;
     const name = $('cName').value.trim(), father = $('cFather').value.trim(), vc = $('cVc').value.trim();
     if(!name || !father || !vc){ toast('نام، ولدیت اور ویلج کونسل لکھنا ضروری ہے'); return; }
     const now = Date.now(), id = now.toString(36)+Math.random().toString(36).slice(2,6), zone = window.__role==='admin' ? $('cZone').value : window.__zone;
     const c = {id, zone, name, father, vc, phone:$('cPhone').value.trim(), muqam:$('cMuqam').value, status:'pending', note:$('cNote').value.trim(), att:{w:[0,0,0,0,0,0], iv:''}, created:now, t:now};
     pend[id] = c; save(); formOpen = false; renderCandPage(); toast('امیدوار شامل ہو گیا ✓');
     post({action:'cand_save', c}).then(sync);
+    if(c.phone) setTimeout(()=>{ if(confirm('امیدوار شامل ہو گیا۔ کیا خوش آمدید پیغام واٹس ایپ پر بھیجیں؟')) candWelcome(id); }, 350);
   };
   window.candStatus = function(id){
     const c = all().find(x=>x.id===id); if(!c || c.status==='approved') return;
-    if(window.__role!=='admin' || window.__ro){ toast('صرف سپر ایڈمن رکن بنا سکتا ہے'); return; }
+    if(window.__role!=='admin' || !window.__can('cand')){ toast('رکن بنانے کی اجازت نہیں'); return; }
     if(!elig(c)){ toast('رکن بننے کے لیے 6 ورکشاپس میں مکمل حاضری اور انٹرویو پاس ہونا ضروری ہے (ابھی ورکشاپ '+nW(c)+'/6، '+IV[(c.att&&c.att.iv)||'']+')'); return; }
     window.arkAddFromCand(c);
     const n = Object.assign({}, c, {status:'approved', t:Date.now()});
     pend[id] = n; save(); renderCandPage(); post({action:'cand_save', c:n}).then(sync);
   };
   window.candDel = function(id){
-    if(window.__ro) return;
+    if(!window.__can('cand')) return;
     if(!confirm('اس امیدوار کو حذف کریں؟')) return;
     delete pend[id]; if(dels.indexOf(id)<0) dels.push(id); save(); renderCandPage();
     post({action:'cand_del', id}).then(sync);
@@ -4682,7 +4723,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('attCnt').textContent = attW.filter(Boolean).length + ' / 6';
   }
   window.candAtt = function(id){
-    if(window.__role!=='admin' || window.__ro) return;
+    if(window.__role!=='admin' || !window.__can('cand')) return;
     const c = all().find(x=>x.id===id); if(!c) return;
     attId = id; attW = ((c.att && c.att.w) || []).slice(0,6); while(attW.length<6) attW.push(0);
     $('attTitle').textContent = c.name + ' — ورکشاپ حاضری اور انٹرویو'; $('attIv').value = (c.att && c.att.iv) || '';
@@ -5071,28 +5112,28 @@ window.buildPrintHTML = function(g){
   window.__onFin = function(list){
     if(!Array.isArray(list)) return;
     server = list.map(e=>({id:String(e.id), mkey:String(e.mkey), ameer:String(e.ameer||''), contact:String(e.contact||''),
-      sabiqa:Number(e.sabiqa)||0, saalana:Number(e.saalana)||0, wasooli:Number(e.wasooli)||0, t:Number(e.t)||0}));
+      sabiqa:Number(e.sabiqa)||0, saalana:Number(e.saalana)||0, wasooli:Number(e.wasooli)||0, ex:Number(e.ex)||0, sm:(e.sm===undefined||e.sm===null||e.sm==='') ? '' : Number(e.sm), t:Number(e.t)||0}));
     const ids = new Set(server.map(e=>e.id));
     Object.keys(pend).forEach(id=>{ if(ids.has(id)) delete pend[id]; });
     save(); Object.keys(pend).forEach(id=>post(pend[id])); apply();
   };
   let target = null;
   window.finEditOpen = function(){
-    if(window.__role!=='admin' || window.__ro) return;
+    if(window.__role!=='admin' || !window.__can('fin')) return;
     target = hisabTargetM; if(!target) return;
     $('finEditTitle').textContent = target.name + ' — مالیاتی ریکارڈ';
     $('fAmeer').value = target.ameer||''; $('fContact').value = target.contact||'';
-    $('fSabiqa').value = target.sabiqa||0; $('fSaalana').value = target.saalana||0; $('fWasooli').value = target.wasooli||0;
+    const fe0 = (window.__finLatest||{})[target._key] || {}; $('fSabiqa').value = target.sabiqa||0; $('fSaalana').value = (fe0.sm===undefined||fe0.sm===null) ? '' : fe0.sm; $('fSaalana').placeholder = 'خودکار: '+target.saalana; $('fEx').value = fe0.ex||0; $('fWasooli').value = target.wasooli||0;
     $('finEditOverlay').classList.add('open');
   };
   window.finEditClose = function(){ $('finEditOverlay').classList.remove('open'); };
   window.finEditSave = function(){
-    if(window.__role!=='admin' || window.__ro || !target) return;
+    if(window.__role!=='admin' || !window.__can('fin') || !target) return;
     const n = id=>Math.max(0, Math.round(Number($(id).value)||0));
     const now = Date.now();
     // ایپ سے جمع شدہ رقمیں الگ شمار ہوتی ہیں؛ بنیادی وصولی = درج کی گئی کل وصولی − ایپ کی جمع رقمیں
     const e = {id:now.toString(36)+Math.random().toString(36).slice(2,5), mkey:target._key, zone:target._zone.id, zoneName:target._zone.name, muqam:target.name,
-      ameer:$('fAmeer').value.trim(), contact:$('fContact').value.trim(), sabiqa:n('fSabiqa'), saalana:n('fSaalana'),
+      ameer:$('fAmeer').value.trim(), contact:$('fContact').value.trim(), sabiqa:n('fSabiqa'), saalana:target.saalana, ex:n('fEx'), sm:($('fSaalana').value.trim()==='' ? '' : n('fSaalana')),
       wasooli: n('fWasooli') - (target._dep||0), date:today(), t:now};
     pend[e.id] = e; save(); finEditClose(); apply(); toast('مالیاتی ریکارڈ محفوظ ہو گیا ✓');
     post(e).then(()=>{ if(window.__api) setTimeout(window.__api.sync, 3000); });
@@ -5507,6 +5548,8 @@ const USERS = [
   {u:"khall", h:"95413958e419a4f30248a4ed90f52aef4bc34ecc8b826a44862b7271e7ae6cbe", role:"zone", zone:"z8", label:"خال زون"},
   {u:"viewer1", h:"175a008ad27b6426ee48f07d7ca1998943cb7a3934d0dbe66fe8e00be1f02846", role:"viewer", zone:"", label:"ایڈمن (صرف دیکھنے کا اختیار)"},
   {u:"viewer2", h:"923e9b64d5fe54309b19ca71a05047469a4e6cc9687566c993493495cd4c40c0", role:"viewer", zone:"", label:"ایڈمن (صرف دیکھنے کا اختیار)"},
+  {u:"cadmin1", h:"a2ade4e9af6f33e73433c802daf67d2326b6355958c6f70b37279caac9ebf354", role:"cadmin", zone:"", label:"ایڈمن (امیدواران)"},
+  {u:"fadmin1", h:"27f9c90ddc7ffb75a9fdfd819bc6c63397c80989ea6ab22d1b1bf00911f40779", role:"fadmin", zone:"", label:"ایڈمن (مالیات)"},
 ];
 
 function sha256(str){
@@ -5544,11 +5587,14 @@ function sha256(str){
   function load(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 
   function applyUser(u, fresh){
-    window.__role = (u.role==='viewer') ? 'admin' : u.role; window.__ro = (u.role==='viewer'); window.__zone = u.zone || null; window.__user = u.u;
+    const adm = ['viewer','cadmin','fadmin'].indexOf(u.role) > -1; window.__role = adm ? 'admin' : u.role; window.__ro = adm; window.__permCand = (u.role==='cadmin'); window.__permFin = (u.role==='fadmin');
+    window.__can = k => !window.__ro || (k==='cand' && window.__permCand) || (k==='fin' && window.__permFin); window.__zone = u.zone || null; window.__user = u.u;
     document.body.classList.remove('locked');
     document.body.classList.add('authed');
     document.body.classList.toggle('role-zone', u.role==='zone');
-    document.body.classList.toggle('ro', u.role==='viewer');
+    document.body.classList.toggle('ro', adm);
+    document.body.classList.toggle('perm-cand', u.role==='cadmin');
+    document.body.classList.toggle('perm-fin', u.role==='fadmin');
     $('loginOverlay').classList.remove('open');
     if(u.role==='zone'){
       // دوسرے زونز کا ڈیٹا اس سیشن سے ہٹا دیں
