@@ -486,6 +486,9 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
 .cd-leg i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-left:5px;}
 .cd-track{height:14px; border-radius:8px; background:var(--line); overflow:hidden; direction:rtl;}
 .cd-stack{display:flex; height:100%; border-radius:8px; overflow:hidden; transition:width .6s ease;}
+#tabSet{display:none;} body.super #tabSet{display:inline-block;}
+#tabsBar{overflow-x:auto; scrollbar-width:none;} #tabsBar::-webkit-scrollbar{display:none;}
+#tabsBar .tab-btn{flex:1 0 auto; white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -509,7 +512,6 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
 </div>
 
 <div id="landing" class="wrap" style="display:none;">
-  <button class="sheet-btn dep urdu" id="landingRepBtn" style="display:none; width:100%; justify-content:center; margin-bottom:10px;" onclick="openRepFromLanding()"><span class="ic">📑</span> رپورٹس</button>
   <div class="dash-carousel" id="dashCar">
   <div class="dash-card dash-slide">
     <p class="dash-title urdu">زون وار اراکین — ڈیش بورڈ</p>
@@ -536,6 +538,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
   <button class="tab-btn urdu" id="tabNotif" onclick="switchPage('notif')">اطلاعات<span class="nbadge" id="notifBadge"></span></button>
   <button class="tab-btn urdu" id="tabCands" onclick="switchPage('cands')">امیدواران</button>
   <button class="tab-btn urdu" id="tabRep" onclick="switchPage('reports')">رپورٹس</button>
+  <button class="tab-btn urdu" id="tabSet" onclick="switchPage('settings')">⚙️ سیٹنگز</button>
 </div>
 
 <div class="wrap" id="mainWrap" style="display:none;">
@@ -570,7 +573,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
       <tr><td class="urdu">تعداد ارکان</td><td id="hdArkanCount"></td></tr>
       <tr class="total"><td class="urdu">کل بقایاجات</td><td id="hdKul"></td></tr>
     </table>
-    <h2 class="section-title urdu">ماہانہ وصولیاں 2026-27</h2>
+    <h2 class="section-title urdu" id="monthlyTitle">ماہانہ وصولیاں 2026-27</h2>
     <div class="monthly-row" id="hdMonthly"></div>
     <table class="fin-table">
       <tr><td class="urdu">کل وصولی</td><td id="hdWasooli"></td></tr>
@@ -607,6 +610,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
 
   <div id="candPage" style="display:none;"></div>
   <div id="repPage" style="display:none;"></div>
+  <div id="setPage" style="display:none;"></div>
 
   <!-- ARKAN PAGE -->
   <div id="arkanPage" style="display:none;">
@@ -3409,6 +3413,8 @@ function switchPage(p){
   document.getElementById('candPage').style.display = p==='cands' ? 'block':'none';
   document.getElementById('tabRep').classList.toggle('active', p==='reports');
   document.getElementById('repPage').style.display = p==='reports' ? 'block':'none';
+  document.getElementById('tabSet').classList.toggle('active', p==='settings');
+  document.getElementById('setPage').style.display = p==='settings' ? 'block':'none';
   document.getElementById('hisabPage').style.display = p==='hisab' ? 'block':'none';
   document.getElementById('arkanPage').style.display = p==='arkan' ? 'block':'none';
   document.getElementById('umaraPage').style.display = p==='umara' ? 'block':'none';
@@ -3524,6 +3530,7 @@ function renderAll(){
   else if(activePage==='notif') renderNotifPage();
   else if(activePage==='cands'){ if(!(window.__candBusy && window.__candBusy())) renderCandPage(); }
   else if(activePage==='reports'){ if(!(window.__repBusy && window.__repBusy())) renderRep(); }
+  else if(activePage==='settings') renderSettings();
   else renderArkanPage(zone);
 }
 
@@ -3948,7 +3955,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   function rebuild(){
     Object.values(index).forEach(m=>{
       m.wasooli = m._base.wasooli; m.baqaya = m._base.baqaya; m.monthly = Object.assign({}, m._base.monthly); m._dep = 0;
-      const fe = (window.__finLatest||{})[m._key];
+      const ss = window.__sess;
+      if(ss){ const sn = ss.snap && ss.snap[m._key]; m.sabiqa = sn ? sn[3] : 0; m.wasooli = 0; m.baqaya = m.sabiqa; m.monthly = {}; }   // نیا سیشن: پچھلا باقی = سابقہ بقایاجات
+      const fe0 = (window.__finLatest||{})[m._key], fe = (ss && fe0 && fe0.t <= ss.t) ? null : fe0;
       if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
       { const am = (window.__ameerM||{})[m._key]; if(am && (!fe || am.t >= fe.t)){ m.ameer = am.n; m.contact = am.c; } }
       { const grp = m._g, cnt = grp ? grp.mem.length : (m.arkan||0);
@@ -3957,6 +3966,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const seen = new Set();
     server.concat(pending).forEach(d=>{
       if(seen.has(d.id)) return; seen.add(d.id);
+      if(window.__sess && String(d.date||'') < window.__sess.start) return;   // پچھلے سیشن کی جمع رقمیں شامل نہ ہوں
       const m = index[d.mkey]; if(!m) return;
       m.monthly[d.month] = (m.monthly[d.month]||0) + d.amount;
       m.wasooli += d.amount; m.baqaya -= d.amount; m._dep = (m._dep||0) + d.amount;
@@ -3965,12 +3975,15 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   }
   function refreshView(){
     if(currentZone === null) return;
+    if(window.__bgSync && document.querySelector('.sheet-overlay.open')) return;   // ڈائیلاگ کھلا ہو تو پس منظر کا اپ ڈیٹ نہ چھیڑے
+    const sy = window.scrollY, dt = document.getElementById('hisabDetail').scrollTop;
     const zone = DATA.zones.find(z=>z.id===currentZone);
     if(activePage==='hisab' && zone){
       const open = document.getElementById('hisabDetail').classList.contains('open');
       const cur = hisabTargetM;
       renderHisab(zone);
       if(open && cur){ openHisabDetail(cur); document.getElementById('hisabPage').style.display='none'; }
+      window.scrollTo(0, sy); document.getElementById('hisabDetail').scrollTop = dt;
     }
   }
 
@@ -3986,6 +3999,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       window.__lastErr = '';
       if(!j || !Array.isArray(j.deposits)) return false;
       window.__lastJ = j;
+      const sig = JSON.stringify(j), same = (sig === window.__lastSig); window.__lastSig = sig;
+      if(same && pendingCount() === 0) return true;     // ڈیٹا نہیں بدلا تو سکرین کو نہ چھیڑیں
+      window.__bgSync = true;
       if(window.__onNotifs){ try{ window.__onNotifs(j.notifications); }catch(e){} }
       if(window.__onCands){ try{ window.__onCands(j.candidates); }catch(e){} }
       if(window.__onArkLog){ try{ window.__onArkLog(j.arkLog); }catch(e){} }
@@ -3999,8 +4015,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       rebuild();
       // جو ابھی شیٹ تک نہیں پہنچا، دوبارہ بھیجیں (id کی وجہ سے ڈپلیکیٹ نہیں بنے گا)
       pending.forEach(sendToSheet);
+      window.__bgSync = false;
       return true;
-    }catch(e){ window.__lastErr = 'لنک سے جواب نہیں آیا یا JSON نہیں (لنک یا Deploy چیک کریں)'; return false; }
+    }catch(e){ window.__bgSync = false; window.__lastErr = 'لنک سے جواب نہیں آیا یا JSON نہیں (لنک یا Deploy چیک کریں)'; return false; }
   }
   function pendingCount(){
     let n = 0;
@@ -4157,6 +4174,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">انٹرویو</span><select id="attIv" class="urdu"><option value="">انٹرویو باقی</option><option value="present">انٹرویو دیا (نتیجہ باقی)</option><option value="pass">انٹرویو پاس</option><option value="fail">انٹرویو فیل</option></select></label>
     <button class="sheet-btn dep urdu" onclick="candAttSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="candAttClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="sessOverlay" onclick="if(event.target===this) sessClose()">
+  <div class="action-sheet" style="max-height:90vh; overflow:auto;">
+    <h4 class="urdu">🔄 نیا مالی سیشن</h4>
+    <p class="sub urdu" id="sessInfo" style="line-height:2;"></p>
+    <label class="dep-field"><span class="urdu">نئے سیشن کا نام</span><input id="sessLabel" style="direction:ltr;text-align:left;" placeholder="2027-28"></label>
+    <label class="dep-field"><span class="urdu">آغاز کی تاریخ</span><input type="date" id="sessDate"></label>
+    <button class="sheet-btn gold urdu" onclick="sessSave()"><span class="ic">✅</span> سیشن بدلیں اور باقی منتقل کریں</button>
+    <button class="sheet-cancel urdu" onclick="sessClose()">منسوخ</button>
   </div>
 </div>
 <div class="sheet-overlay" id="ameerOverlay" onclick="if(event.target===this) ameerClose()">
@@ -4811,6 +4838,10 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
         it.z = e.zone; it.mu = e.muqam;
       }
     });
+    const sessEv = ev.filter(e=>e.type==='session'); window.__sessions = sessEv;
+    const ls = sessEv[sessEv.length-1];
+    window.__sess = ls ? {label:ls.n, old:ls.f, start:String(ls.date||''), t:ls.t, snap:(ls.x && ls.x.snap) || {}} : null;
+    const mt = document.getElementById('monthlyTitle'); if(mt) mt.textContent = 'ماہانہ وصولیاں ' + (window.__sess ? window.__sess.label : '2026-27');
     const amM = {};
     ev.filter(e=>e.type==='ameer').forEach(e=>{
       if(e.x && e.x.kind==='m') amM[e.key] = {n:e.n, c:e.c, t:e.t};
@@ -4980,6 +5011,46 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'ameer', reason:(t==='m'?'مقامی':'زونل')+' امیر کی تبدیلی', zone:z.id, muqam:mu, n:name, f:'', c:ph, key, date:today(), t:now, x:{kind:t}});
     ameerClose(); toast('امیر کی تبدیلی محفوظ ہو گئی ✓');
   };
+  // ---------- سیٹنگز: سیشن بدلنا، امراء میں تبدیلی (صرف سپر ایڈمن) ----------
+  const sessLabel = ()=> window.__sess ? window.__sess.label : '2026-27';
+  window.__sessLabel = sessLabel;
+  const nextLabel = l=>{ const m = String(l).match(/(\d{4})\D+(\d{2,4})/); return m ? ((+m[1]+1)+'-'+String((+m[2]+1)%100).padStart(2,'0')) : ''; };
+  const carry = ()=>{ let b = 0, n = 0; DATA.zones.forEach(z=>z.muqamat.forEach(m=>{ b += Math.round(m.baqaya||0); n++; })); return {b, n}; };
+  let setZ = null;
+  window.setZone = function(v){ setZ = v; renderSettings(); };
+  window.renderSettings = function(){
+    const box = $('setPage'); if(!box) return;
+    if(window.__role!=='admin' || window.__ro){ box.innerHTML = '<div class="n-empty urdu">یہ سیکشن صرف سپر ایڈمن کے لیے ہے</div>'; return; }
+    setZ = setZ || DATA.zones[0].id;
+    const zo = DATA.zones.find(x=>x.id===setZ) || DATA.zones[0];
+    const past = (window.__sessions||[]).slice().reverse().map(e=>{ let b = 0; Object.keys((e.x&&e.x.snap)||{}).forEach(k=>{ b += e.x.snap[k][3]||0; });
+      return '<div class="cand-sub urdu" style="margin:4px 0;">'+esc(e.f||'')+' ← '+esc(e.n)+' (آغاز: '+esc(e.date)+') • منتقل شدہ باقی: '+fmt(b)+'</div>'; }).join('');
+    const zrows = DATA.zones.map(z=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(z.name)+'</b><div class="cand-sub urdu">زونل امیر: '+esc(z.ameer||'-')+' • '+esc(z.ameerContact||'')+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="ameerOpenFor(\'z\',\''+z.id+'\')">✏️ تبدیلی</button></div>').join('');
+    const mrows = zo.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">مقامی امیر: '+esc(m.ameer||'-')+' • '+esc(m.contact||'')+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="ameerOpenFor(\'m\',\''+zo.id+'\','+i+')">✏️ تبدیلی</button></div>').join('');
+    box.innerHTML = '<h2 class="section-title urdu">سیٹنگز</h2>'
+      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مالی سیشن</div><div class="rp-row"><b class="urdu">موجودہ سیشن: <span style="direction:ltr;display:inline-block;">'+esc(sessLabel())+'</span></b><span class="cand-sub" style="direction:ltr;">'+(window.__sess?esc(window.__sess.start):'')+'</span></div>'
+      + '<button class="sheet-btn gold urdu" style="margin-top:10px;" onclick="sessOpen()"><span class="ic">🔄</span> نیا سیشن شروع کریں</button>'+(past?'<div class="rp-sec urdu">پچھلے سیشنز</div>'+past:'')+'</div>'
+      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">زونل امراء</div>'+zrows+'</div>'
+      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مقامی امراء</div><label class="dep-field"><span class="urdu">زون</span><select class="urdu" onchange="setZone(this.value)">'+DATA.zones.map(z=>'<option value="'+z.id+'"'+(z.id===zo.id?' selected':'')+'>'+esc(z.name)+'</option>').join('')+'</select></label>'+mrows+'</div>';
+  };
+  window.ameerOpenFor = function(t, z, mi){ ameerOpen(); $('amType').value = t; $('amZone').value = z; ameerFill(); if(t==='m' && mi!==undefined){ $('amMuqam').value = mi; ameerPick(); } };
+  window.sessOpen = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const c = carry();
+    $('sessLabel').value = nextLabel(sessLabel()); $('sessDate').value = today();
+    $('sessInfo').innerHTML = 'موجودہ سیشن <b>'+esc(sessLabel())+'</b> کا کل باقی <b>'+fmt(c.b)+'</b> ('+c.n+' مقامات) نئے سیشن میں <b>سابقہ بقایاجات</b> بن جائے گا۔ نئے سیشن کی وصولی صفر سے شروع ہوگی اور سالانہ اعانت ارکان × 4800 کے مطابق نئی لگے گی۔ یہ عمل واپس نہیں ہوتا۔';
+    $('sessOverlay').classList.add('open');
+  };
+  window.sessClose = function(){ $('sessOverlay').classList.remove('open'); };
+  window.sessSave = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const label = $('sessLabel').value.trim(), start = $('sessDate').value; if(!label || !start){ toast('سیشن کا نام اور تاریخ لکھیں'); return; }
+    if(!confirm('نیا سیشن '+label+' شروع کریں؟ موجودہ باقی سابقہ بقایاجات میں منتقل ہو جائے گا۔')) return;
+    const snap = {}; DATA.zones.forEach(z=>z.muqamat.forEach(m=>{ snap[m._key] = [Math.round(m.sabiqa||0), Math.round(m.saalana||0), Math.round(m.wasooli||0), Math.round(m.baqaya||0), m.arkan||0]; }));
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'session', reason:'نیا سیشن', zone:'', muqam:'', n:label, f:sessLabel(), c:'', key:'', date:start, t:now, x:{snap}});
+    sessClose(); toast('نیا سیشن شروع ہو گیا ✓ — باقی سابقہ بقایاجات میں منتقل');
+  };
   window.arkDelClose = function(){ $('arkDelOverlay').classList.remove('open'); };
   window.arkRemove = function(reason){
     if(!curG || !curM || window.__ro) return;
@@ -5004,7 +5075,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='ameer' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -5183,7 +5254,7 @@ function togglePw(){
 <script>
 // ================== ہیڈر میں موجودہ صفحے کا راستہ: گھر > مالیات > زون > مقام ==================
 (function(){
-  const TABS = {hisab:'مالیات', arkan:'اراکین', umara:'امراء', notif:'اطلاعات', cands:'امیدواران', reports:'رپورٹس'};
+  const TABS = {hisab:'مالیات', arkan:'اراکین', umara:'امراء', notif:'اطلاعات', cands:'امیدواران', reports:'رپورٹس', settings:'سیٹنگز'};
   let arkanMuqam = null;
   function update(){
     const el = document.getElementById('crumb'); if(!el) return;
@@ -5217,7 +5288,7 @@ function togglePw(){
       return {name:z.name, w, b, t:w+b, i};
     });
     const W = rows.reduce((a,r)=>a+r.w,0), B = rows.reduce((a,r)=>a+r.b,0), T = W + B, P = T ? W/T*100 : 0;
-    s1.innerHTML = '<p class="dash-title urdu">زون وار مالیات — وصولی</p><p class="dash-sub urdu">مالی سال 27-2026</p>'
+    s1.innerHTML = '<p class="dash-title urdu">زون وار مالیات — وصولی</p><p class="dash-sub urdu">مالی سال '+(window.__sessLabel ? __sessLabel() : '2026-27')+'</p>'
       + '<div class="fd-kpi urdu"><div class="g"><b>'+fmt(W)+'</b><span>کل وصولی</span></div><div class="r"><b>'+fmt(B)+'</b><span>کل باقی</span></div><div class="p"><b>'+P.toFixed(1)+'%</b><span>وصولی کا تناسب</span></div></div>'
       + rows.map(r=>{ const p = r.t ? r.w/r.t*100 : 0;
           return '<div class="fd-row"><div class="fd-top"><span class="urdu">'+r.name+'</span><b>'+p.toFixed(1)+'%</b></div><div class="fd-track"><i style="width:'+Math.max(p,p>0?2:0)+'%"></i></div><div class="fd-amt">'+fmt(r.w)+' / '+fmt(r.t)+'</div></div>'; }).join('');
@@ -5241,7 +5312,7 @@ function togglePw(){
     c.addEventListener('scroll', ()=>{ clearTimeout(c._t); c._t = setTimeout(paint, 60); }, {passive:true});
     d.addEventListener('click', e=>{ const i = Number(e.target.dataset && e.target.dataset.i); if(!isNaN(i) && e.target.dataset.i!==undefined) go(i); });
     ['pointerdown','touchstart','wheel'].forEach(ev=>c.addEventListener(ev, ()=>{ c._pause = Date.now()+15000; }, {passive:true}));
-    setInterval(()=>{ const l = document.getElementById('landing'); if(document.hidden || !l || l.offsetParent===null || Date.now() < (c._pause||0)) return; go((idx()+1)%n); }, 7000);
+    setInterval(()=>{ const l = document.getElementById('landing'); if(document.hidden || !l || l.offsetParent===null || Date.now() < (c._pause||0) || !(window.__idle && window.__idle())) return; go((idx()+1)%n); }, 7000);
     paint();
   }
   const _rd = window.renderDashboard;
@@ -5296,7 +5367,7 @@ function togglePw(){
     c.addEventListener('scroll', ()=>{ clearTimeout(c._t); c._t = setTimeout(paint, 60); }, {passive:true});
     d.addEventListener('click', e=>{ if(e.target.dataset && e.target.dataset.i!==undefined) go(Number(e.target.dataset.i)); });
     ['pointerdown','touchstart','wheel'].forEach(ev=>c.addEventListener(ev, ()=>{ c._pause = Date.now()+15000; }, {passive:true}));
-    setInterval(()=>{ if(document.hidden || c.offsetParent===null || Date.now() < (c._pause||0)) return; go((idx()+1)%n); }, 7000);
+    setInterval(()=>{ if(document.hidden || c.offsetParent===null || Date.now() < (c._pause||0) || !(window.__idle && window.__idle())) return; go((idx()+1)%n); }, 7000);
     setTimeout(paint, 150);
   }
   const _rh = window.renderHisab;
@@ -5484,7 +5555,7 @@ function togglePw(){
 // ================== بیک بٹن: قدم بہ قدم واپسی، ہوم پر دو بار دبانے سے ایپ بند ==================
 (function(){
   const CLOSERS = {depOverlay:'closeDeposit', arkDelOverlay:'arkDelClose', arkEditOverlay:'arkEditClose', arkAddOverlay:'arkAddClose', finEditOverlay:'finEditClose',
-                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme'};
+                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose'};
   let exitAt = 0;
   const $ = id=>document.getElementById(id);
   function toast(m){ const t = $('depToast'); if(!t) return; t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2000); }
@@ -5513,6 +5584,24 @@ function togglePw(){
     exitAt = now; toast('ایپ بند کرنے کے لیے دوبارہ بیک دبائیں'); arm();
   });
 })();
+</script>
+<script>
+// ہوم سکرین پر بھی اوپر کے ٹیبز (ایڈمن کے لیے): ٹیب دبانے پر پہلا زون کھلتا ہے، "گھر" سے واپسی
+(function(){
+  function show(){ const tb = document.getElementById('tabsBar'); if(window.__role==='admin' && currentZone===null && tb) tb.style.display = 'flex'; }
+  ['renderAll','showLanding'].forEach(n=>{ const o = window[n]; window[n] = function(){ const r = o.apply(this, arguments); show(); return r; }; });
+  const sp = window.switchPage;
+  window.switchPage = function(){ if(currentZone===null && window.__role==='admin') currentZone = DATA.zones[0].id; return sp.apply(this, arguments); };
+})();
+</script>
+<script>
+// صارف کی سرگرمی: جب تک کوئی کام کر رہا ہو، سلائیڈز خود نہ بدلیں
+window.__lastAct = Date.now();
+['pointerdown','keydown','touchstart','wheel','scroll','input'].forEach(ev=>window.addEventListener(ev, ()=>{ window.__lastAct = Date.now(); }, {passive:true, capture:true}));
+window.__idle = function(){
+  const ae = document.activeElement;
+  return Date.now() - window.__lastAct > 30000 && !document.querySelector('.sheet-overlay.open') && !(ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) && window.scrollY < 120;
+};
 </script>
 <script>
 // لکھتے وقت (کی بورڈ کھلنے پر) فیلڈ کو نظر کے سامنے لانا
@@ -5595,6 +5684,7 @@ function sha256(str){
     document.body.classList.toggle('ro', adm);
     document.body.classList.toggle('perm-cand', u.role==='cadmin');
     document.body.classList.toggle('perm-fin', u.role==='fadmin');
+    document.body.classList.toggle('super', u.role==='admin');
     $('loginOverlay').classList.remove('open');
     if(u.role==='zone'){
       // دوسرے زونز کا ڈیٹا اس سیشن سے ہٹا دیں
