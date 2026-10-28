@@ -489,6 +489,15 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
 #tabSet{display:none;} body.super #tabSet{display:inline-block;}
 #tabsBar{overflow-x:auto; scrollbar-width:none;} #tabsBar::-webkit-scrollbar{display:none;}
 #tabsBar .tab-btn{flex:1 0 auto; white-space:nowrap;}
+@media (min-width:600px){ ul:has(> .m-card), ul.m-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; padding:0; list-style:none;} }
+@media (min-width:900px){
+  div:has(> .m-card), div:has(> .cand-card), #notifList, ul:has(> .m-card), ul.m-list{grid-template-columns:repeat(2,1fr) !important;}
+  #adArkanNames{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; padding:0; list-style:none;}
+  div:has(> .rp-box.rp-row){display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
+  div:has(> .rp-box.rp-row) > :not(.rp-box){grid-column:1/-1;}
+  #hdMonthly{grid-template-columns:repeat(6,1fr) !important;}
+}
+#hdMonthly .m{transition:transform .12s;} #hdMonthly .m:hover{transform:translateY(-2px);}
 </style>
 </head>
 <body>
@@ -547,6 +556,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
   <!-- HISAB KITAB PAGE -->
   <div id="hisabPage">
     <div class="dash-carousel" id="zoneCar"></div><div class="dash-dots" id="zoneDots"></div>
+    <input id="hisabSearch" class="rp-i urdu" style="text-align:right;padding:10px;margin:0 0 8px;" placeholder="🔍 مقام تلاش کریں" oninput="hisabFilter(this.value)">
     <div class="zone-ameer">
       <div><div class="urdu" id="zoneAmeerName"></div><div class="role">زون امیر</div></div>
       <div class="num" id="zoneAmeerContact"></div>
@@ -625,6 +635,8 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
     <button class="sheet-btn dep urdu" id="arkNewBtn" onclick="arkAddOpen()"><span class="ic">➕</span> نیا رکن شامل کریں</button>
     <button class="sheet-btn dep urdu" id="arkMuqamBtn" onclick="arkMuqamAdd(currentZone)"><span class="ic">🏘</span> نیا مقام شامل کریں</button>
     <button class="sheet-btn dep urdu" id="arkRepBtn" onclick="openArkRep()"><span class="ic">📊</span> اراکین کی تبدیلی کی رپورٹ</button>
+    <input id="arkSearch" class="rp-i urdu" style="text-align:right;padding:10px;margin:6px 0 8px;" placeholder="🔍 رکن (نام / ولدیت / نمبر) یا مقام تلاش کریں" oninput="arkSearch(this.value)">
+    <div id="arkSearchRes"></div>
     <h2 class="section-title urdu">مقامات بلحاظ اراکین</h2>
     <ul class="m-list" id="arkanList"></ul>
   </div>
@@ -3901,8 +3913,7 @@ renderAll();
       <label class="dep-field"><span class="urdu">مہینہ</span><select id="depMonth"></select></label>
       <label class="dep-field"><span class="urdu">تاریخ</span><input type="date" id="depDate"></label>
     </div>
-    <label class="dep-field"><span class="urdu">رقم (روپے)</span><select id="depAmountSel"></select></label>
-    <label class="dep-field" id="depCustomWrap" style="display:none;"><span class="urdu">اپنی رقم لکھیں</span><input type="number" inputmode="numeric" min="1" id="depCustom" placeholder="مثلاً 7500"></label>
+    <label class="dep-field" id="depCustomWrap"><span class="urdu">رقم (روپے)</span><input type="number" inputmode="numeric" min="1" id="depCustom"></label>
     <button class="sheet-btn dep urdu" id="depSubmit" onclick="submitDeposit()" style="margin-top:4px;"><span class="ic">✅</span> جمع کریں</button>
     <button class="sheet-cancel urdu" onclick="closeDeposit()">منسوخ</button>
     <p class="dep-status" id="depStatus"></p>
@@ -4087,11 +4098,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const ds = $('depDate'); ds.value = today();
     ms.value = MKEY[new Date(ds.value+'T00:00:00').getMonth()];
     ds.onchange = ()=>{ if(ds.value) ms.value = MKEY[new Date(ds.value+'T00:00:00').getMonth()]; };
-    const as = $('depAmountSel'); as.innerHTML = '<option value="">— رقم منتخب کریں —</option>';
-    AMOUNTS.forEach(a=>{ const o=document.createElement('option'); o.value=a; o.textContent=a.toLocaleString(); as.appendChild(o); });
-    const oc=document.createElement('option'); oc.value='custom'; oc.textContent='دیگر رقم…'; as.appendChild(oc);
-    as.value=''; $('depCustom').value=''; $('depCustomWrap').style.display='none';
-    as.onchange = ()=>{ $('depCustomWrap').style.display = as.value==='custom' ? 'block':'none'; };
+    $('depCustom').value = '';
     setStatus();
     $('depOverlay').classList.add('open');
   };
@@ -4099,8 +4106,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 
   window.submitDeposit = function(){
     if(!target) return;
-    const sel = $('depAmountSel').value;
-    const amount = Math.round(Number(sel==='custom' ? $('depCustom').value : sel));
+    const amount = Math.round(Number($('depCustom').value));
     if(!amount || amount<=0){ toast('پہلے رقم منتخب کریں'); return; }
     if(amount > target.baqaya && !confirm('یہ رقم باقی ('+fmt(target.baqaya)+') سے زیادہ ہے۔ پھر بھی جمع کریں؟')) return;
     const d = { id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
@@ -4114,6 +4120,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 
   window.__api = { url: apiUrl, key: apiKey, sync: syncFromSheet };
   window.__depRebuild = rebuild;
+  window.__addDeposit = function(d){ pending.push(d); LS.set('jid_pending', pending); rebuild(); if(apiUrl()){ sendToSheet(d).then(()=>setTimeout(syncFromSheet, 3000)); } };
   window.__regMuqam = function(z, m){ const key = z.id+':'+(m.code||m.name); m._key = key; m._zone = z; m._base = {wasooli:0, baqaya:0, monthly:{}}; index[key] = m; };
   rebuild();
   syncFromSheet();
@@ -4176,6 +4183,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <button class="sheet-cancel urdu" onclick="candAttClose()">منسوخ</button>
   </div>
 </div>
+<div class="sheet-overlay" id="monEditOverlay" onclick="if(event.target===this) monEditClose()">
+  <div class="action-sheet">
+    <h4 class="urdu" id="monTitle"></h4>
+    <p class="sub urdu">موجودہ رقم: <b id="monCur"></b></p>
+    <label class="dep-field"><span class="urdu">درست رقم (روپے)</span><input type="number" inputmode="numeric" min="0" id="monNew"></label>
+    <p class="sub urdu">فرق خود "تصحیح" کی صورت میں درج ہو گا (ریکارڈ محفوظ رہے گا)</p>
+    <button class="sheet-btn gold urdu" onclick="monEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="monEditClose()">منسوخ</button>
+  </div>
+</div>
 <div class="sheet-overlay" id="sessOverlay" onclick="if(event.target===this) sessClose()">
   <div class="action-sheet" style="max-height:90vh; overflow:auto;">
     <h4 class="urdu">🔄 نیا مالی سیشن</h4>
@@ -4192,6 +4209,8 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">کس کا امیر</span><select id="amType" class="urdu" onchange="ameerFill()"><option value="z">زونل امیر</option><option value="m">مقامی امیر</option></select></label>
     <label class="dep-field"><span class="urdu">زون</span><select id="amZone" class="urdu" onchange="ameerFill()"></select></label>
     <label class="dep-field" id="amMuqamW" style="display:none;"><span class="urdu">مقام</span><select id="amMuqam" class="urdu" onchange="ameerPick()"></select></label>
+    <label class="dep-field"><span class="urdu">🔍 ارکان میں تلاش کر کے امیر منتخب کریں</span><input id="amSearch" class="urdu" placeholder="نام / ولدیت / نمبر" oninput="amFind(this.value)"></label>
+    <div id="amRes" style="margin-bottom:8px;"></div>
     <label class="dep-field"><span class="urdu">نئے امیر کا نام</span><input id="amName" class="urdu"></label>
     <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="amPhone" type="tel" inputmode="tel"></label>
     <button class="sheet-btn dep urdu" onclick="ameerSave()"><span class="ic">✅</span> محفوظ کریں</button>
@@ -4242,16 +4261,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <h2 class="section-title urdu" style="margin:0;">اراکین کی تبدیلی کی رپورٹ</h2>
   </div>
   <div class="dep-row">
-    <label class="dep-field"><span class="urdu">زون</span><select id="rZone" onchange="renderRep()"></select></label>
-    <label class="dep-field"><span class="urdu">قسم</span><select id="rType" onchange="renderRep()"><option value="all">سب</option><option value="add">نئے اراکین</option><option value="remove">ختم ہونے والے</option></select></label>
+    <label class="dep-field"><span class="urdu">زون</span><select id="rZone" onchange="renderArkRep()"></select></label>
+    <label class="dep-field"><span class="urdu">قسم</span><select id="rType" onchange="renderArkRep()"><option value="all">سب</option><option value="add">نئے اراکین</option><option value="remove">ختم ہونے والے</option></select></label>
   </div>
   <div class="dep-row">
-    <label class="dep-field"><span class="urdu">مدت</span><select id="rMode" onchange="renderRep()"><option value="all">تمام وقت</option><option value="month">ماہانہ</option><option value="range">تاریخ سے تاریخ</option></select></label>
-    <label class="dep-field" id="rMonthW" style="display:none;"><span class="urdu">مہینہ</span><input type="month" id="rMonth" onchange="renderRep()"></label>
+    <label class="dep-field"><span class="urdu">مدت</span><select id="rMode" onchange="renderArkRep()"><option value="all">تمام وقت</option><option value="month">ماہانہ</option><option value="range">تاریخ سے تاریخ</option></select></label>
+    <label class="dep-field" id="rMonthW" style="display:none;"><span class="urdu">مہینہ</span><input type="month" id="rMonth" onchange="renderArkRep()"></label>
   </div>
   <div class="dep-row" id="rRangeW" style="display:none;">
-    <label class="dep-field"><span class="urdu">سے</span><input type="date" id="rFrom" onchange="renderRep()"></label>
-    <label class="dep-field"><span class="urdu">تک</span><input type="date" id="rTo" onchange="renderRep()"></label>
+    <label class="dep-field"><span class="urdu">سے</span><input type="date" id="rFrom" onchange="renderArkRep()"></label>
+    <label class="dep-field"><span class="urdu">تک</span><input type="date" id="rTo" onchange="renderArkRep()"></label>
   </div>
   <div id="rBody"></div>
 </div>
@@ -4872,7 +4891,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if(window.__depRebuild) window.__depRebuild();
     renderAll();
     if($('arkanDetail').classList.contains('open') && lastG) openArkanDetail(lastG);
-    if($('arkRep').style.display==='block') renderRep();
+    if($('arkRep').style.display==='block') renderArkRep();
   }
   window.__onArkLog = function(list){
     if(!Array.isArray(list)) return;
@@ -4988,7 +5007,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if(window.__role!=='admin' || window.__ro) return;
     $('amType').value = 'z';
     $('amZone').innerHTML = DATA.zones.map(x=>'<option value="'+x.id+'"'+(x.id===currentZone?' selected':'')+'>'+esc(x.name)+'</option>').join('');
-    ameerFill(); $('ameerOverlay').classList.add('open');
+    ameerFill(); if($('amSearch')){ $('amSearch').value = ''; $('amRes').innerHTML = ''; } $('ameerOverlay').classList.add('open');
   };
   window.ameerClose = function(){ $('ameerOverlay').classList.remove('open'); };
   window.ameerFill = function(){
@@ -5016,23 +5035,39 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.__sessLabel = sessLabel;
   const nextLabel = l=>{ const m = String(l).match(/(\d{4})\D+(\d{2,4})/); return m ? ((+m[1]+1)+'-'+String((+m[2]+1)%100).padStart(2,'0')) : ''; };
   const carry = ()=>{ let b = 0, n = 0; DATA.zones.forEach(z=>z.muqamat.forEach(m=>{ b += Math.round(m.baqaya||0); n++; })); return {b, n}; };
-  let setZ = null;
+  let setMode = null, setZ = '';
+  window.setMode = function(m){ setMode = (setMode===m ? null : m); renderSettings(); };
   window.setZone = function(v){ setZ = v; renderSettings(); };
   window.renderSettings = function(){
     const box = $('setPage'); if(!box) return;
     if(window.__role!=='admin' || window.__ro){ box.innerHTML = '<div class="n-empty urdu">یہ سیکشن صرف سپر ایڈمن کے لیے ہے</div>'; return; }
-    setZ = setZ || DATA.zones[0].id;
-    const zo = DATA.zones.find(x=>x.id===setZ) || DATA.zones[0];
     const past = (window.__sessions||[]).slice().reverse().map(e=>{ let b = 0; Object.keys((e.x&&e.x.snap)||{}).forEach(k=>{ b += e.x.snap[k][3]||0; });
       return '<div class="cand-sub urdu" style="margin:4px 0;">'+esc(e.f||'')+' ← '+esc(e.n)+' (آغاز: '+esc(e.date)+') • منتقل شدہ باقی: '+fmt(b)+'</div>'; }).join('');
-    const zrows = DATA.zones.map(z=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(z.name)+'</b><div class="cand-sub urdu">زونل امیر: '+esc(z.ameer||'-')+' • '+esc(z.ameerContact||'')+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="ameerOpenFor(\'z\',\''+z.id+'\')">✏️ تبدیلی</button></div>').join('');
-    const mrows = zo.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">مقامی امیر: '+esc(m.ameer||'-')+' • '+esc(m.contact||'')+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="ameerOpenFor(\'m\',\''+zo.id+'\','+i+')">✏️ تبدیلی</button></div>').join('');
+    const eb = (a)=>'<button class="tab-btn urdu" style="padding:6px 14px;" onclick="'+a+'">✏️ تبدیلی</button>';
+    let body = '';
+    if(setMode==='z') body = DATA.zones.map(z=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(z.name)+'</b><div class="cand-sub urdu">زونل امیر: '+esc(z.ameer||'-')+' • '+esc(z.ameerContact||'')+'</div></div>'+eb("ameerOpenFor('z','"+z.id+"')")+'</div>').join('');
+    if(setMode==='m'){
+      const zo = DATA.zones.find(x=>x.id===setZ);
+      body = '<label class="dep-field"><span class="urdu">زون منتخب کریں</span><select class="urdu" onchange="setZone(this.value)"><option value="">— زون منتخب کریں —</option>'+DATA.zones.map(z=>'<option value="'+z.id+'"'+(z.id===setZ?' selected':'')+'>'+esc(z.name)+'</option>').join('')+'</select></label>'
+        + (zo ? zo.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">مقامی امیر: '+esc(m.ameer||'-')+' • '+esc(m.contact||'')+'</div></div>'+eb("ameerOpenFor('m','"+zo.id+"',"+i+")")+'</div>').join('') : '<div class="cand-sub urdu">زون منتخب کریں تو اس کے مقامی امراء کی فہرست آئے گی</div>');
+    }
     box.innerHTML = '<h2 class="section-title urdu">سیٹنگز</h2>'
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مالی سیشن</div><div class="rp-row"><b class="urdu">موجودہ سیشن: <span style="direction:ltr;display:inline-block;">'+esc(sessLabel())+'</span></b><span class="cand-sub" style="direction:ltr;">'+(window.__sess?esc(window.__sess.start):'')+'</span></div>'
       + '<button class="sheet-btn gold urdu" style="margin-top:10px;" onclick="sessOpen()"><span class="ic">🔄</span> نیا سیشن شروع کریں</button>'+(past?'<div class="rp-sec urdu">پچھلے سیشنز</div>'+past:'')+'</div>'
-      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">زونل امراء</div>'+zrows+'</div>'
-      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مقامی امراء</div><label class="dep-field"><span class="urdu">زون</span><select class="urdu" onchange="setZone(this.value)">'+DATA.zones.map(z=>'<option value="'+z.id+'"'+(z.id===zo.id?' selected':'')+'>'+esc(z.name)+'</option>').join('')+'</select></label>'+mrows+'</div>';
+      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">امراء میں تبدیلی</div><div class="rp-row" style="gap:8px;margin-bottom:10px;">'
+      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>';
   };
+  // امیر چننے کے لیے ارکان میں تلاش
+  const normS = t=>String(t||'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ةھهۃ]/g,'ہ').toLowerCase();
+  let amRes = [];
+  window.amFind = function(q){
+    const box = $('amRes'); q = normS(q).trim(); if(q.length < 2){ box.innerHTML = ''; return; }
+    const zsel = $('amZone').value, out = [];
+    Object.keys(AR_DATA).forEach(z=>AR_DATA[z].forEach(g=>g.mem.forEach(m=>{ if(normS([m.n,m.f,m.c,m.d].join(' ')).indexOf(q) > -1) out.push({z,g,m}); })));
+    out.sort((a,b)=>(b.z===zsel)-(a.z===zsel)); amRes = out.slice(0,15);
+    box.innerHTML = amRes.map((r,i)=>'<div class="rp-box rp-row" style="cursor:pointer;margin-bottom:6px;" onclick="amPick('+i+')"><div><b class="urdu">'+esc(r.m.n)+'</b><div class="cand-sub urdu">ولد '+esc(r.m.f||'-')+' • '+esc(r.g.m)+'</div></div><span class="cand-sub" style="direction:ltr;">'+esc(r.m.c||'')+'</span></div>').join('') || '<div class="cand-sub urdu">کوئی رکن نہیں ملا</div>';
+  };
+  window.amPick = function(i){ const r = amRes[i]; if(!r) return; $('amName').value = r.m.n; $('amPhone').value = r.m.c||''; $('amRes').innerHTML = ''; $('amSearch').value = ''; };
   window.ameerOpenFor = function(t, z, mi){ ameerOpen(); $('amType').value = t; $('amZone').value = z; ameerFill(); if(t==='m' && mi!==undefined){ $('amMuqam').value = mi; ameerPick(); } };
   window.sessOpen = function(){
     if(window.__role!=='admin' || window.__ro) return;
@@ -5065,12 +5100,11 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const zs = $('rZone');
     if(!zs.options.length){
       zs.innerHTML = '<option value="all">تمام زونز</option>' + DATA.zones.map(z=>'<option value="'+z.id+'">'+esc(z.name)+'</option>').join('');
-      if(currentZone) zs.value = currentZone;
     }
-    $('arkRep').style.display = 'block'; document.body.style.overflow = 'hidden'; renderRep();
+    $('arkRep').style.display = 'block'; document.body.style.overflow = 'hidden'; renderArkRep();
   };
   window.closeArkRep = function(){ $('arkRep').style.display = 'none'; document.body.style.overflow = ''; };
-  window.renderRep = function(){
+  window.renderArkRep = function(){
     const mode = $('rMode').value;
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
@@ -5555,7 +5589,7 @@ function togglePw(){
 // ================== بیک بٹن: قدم بہ قدم واپسی، ہوم پر دو بار دبانے سے ایپ بند ==================
 (function(){
   const CLOSERS = {depOverlay:'closeDeposit', arkDelOverlay:'arkDelClose', arkEditOverlay:'arkEditClose', arkAddOverlay:'arkAddClose', finEditOverlay:'finEditClose',
-                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose'};
+                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose', monEditOverlay:'monEditClose'};
   let exitAt = 0;
   const $ = id=>document.getElementById(id);
   function toast(m){ const t = $('depToast'); if(!t) return; t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2000); }
@@ -5602,6 +5636,49 @@ window.__idle = function(){
   const ae = document.activeElement;
   return Date.now() - window.__lastAct > 30000 && !document.querySelector('.sheet-overlay.open') && !(ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) && window.scrollY < 120;
 };
+</script>
+<script>
+// ================== تلاش (ارکان / مقام) + مہینے کی رقم میں ترمیم ==================
+(function(){
+  const $ = id=>document.getElementById(id);
+  const esc = t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const norm = t=>String(t||'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ةھهۃ]/g,'ہ').toLowerCase();
+  const today = ()=>{ const t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0'); };
+  let res = [], hq = '', cur = null;
+  window.arkSearch = function(q){
+    q = norm(q).trim();
+    document.querySelectorAll('#arkanList li').forEach(li=>{ li.style.display = (!q || norm(li.textContent).indexOf(q) > -1) ? '' : 'none'; });
+    const box = $('arkSearchRes'); res = []; if(q.length < 2){ box.innerHTML = ''; return; }
+    Object.keys(AR_DATA).forEach(z=>AR_DATA[z].forEach(g=>g.mem.forEach(m=>{ if(res.length < 30 && norm([m.n,m.f,m.c,m.d].join(' ')).indexOf(q) > -1) res.push({z,g,m}); })));
+    box.innerHTML = res.length ? '<div class="rp-sec urdu">ارکان ('+res.length+')</div>' + res.map((r,i)=>'<div class="rp-box rp-row" style="cursor:pointer;margin-bottom:6px;" onclick="arkOpenFound('+i+')"><div><b class="urdu">'+esc(r.m.n)+'</b><div class="cand-sub urdu">ولد '+esc(r.m.f||'-')+' • '+esc(r.g.m)+' • '+esc((DATA.zones.find(x=>x.id===r.z)||{}).name||'')+'</div></div><span class="cand-sub" style="direction:ltr;">'+esc(r.m.c||'')+(r.m.d?' • #'+esc(r.m.d):'')+'</span></div>').join('') : '<div class="cand-sub urdu" style="margin:6px 0;">کوئی رکن نہیں ملا</div>';
+  };
+  window.arkOpenFound = function(i){ const r = res[i]; if(!r) return; if(currentZone !== r.z) selectZone(r.z); switchPage('arkan'); openArkanDetail(r.g); };
+  function applyH(){ document.querySelectorAll('#hisabPage .m-card').forEach(el=>{ el.style.display = (!hq || norm(el.textContent).indexOf(hq) > -1) ? '' : 'none'; }); }
+  window.hisabFilter = function(q){ hq = norm(q).trim(); applyH(); };
+  const rh = window.renderHisab; window.renderHisab = function(){ const r = rh.apply(this, arguments); applyH(); return r; };
+
+  // مہینے کے خانے پر ٹیپ: رقم درست کریں (فرق "تصحیح" کے طور پر درج)
+  const oh = window.openHisabDetail;
+  window.openHisabDetail = function(){
+    const r = oh.apply(this, arguments);
+    try{ if(window.__role==='admin' && window.__can && window.__can('fin')) document.querySelectorAll('#hdMonthly .m').forEach((el,i)=>{ el.style.cursor = 'pointer'; el.title = 'رقم میں ترمیم'; el.onclick = ()=>monEditOpen(MONTHS[i][0], MONTHS[i][1]); }); }catch(e){}
+    return r;
+  };
+  window.monEditOpen = function(k, label){
+    const m = hisabTargetM; if(!m) return; cur = {k, label, v:(m.monthly||{})[k]||0};
+    $('monTitle').textContent = label + ' — رقم میں ترمیم'; $('monCur').textContent = fmt(cur.v); $('monNew').value = cur.v;
+    $('monEditOverlay').classList.add('open');
+  };
+  window.monEditClose = function(){ $('monEditOverlay').classList.remove('open'); };
+  window.monEditSave = function(){
+    const m = hisabTargetM; if(!m || !cur || !window.__can('fin')) return;
+    const nv = Math.max(0, Math.round(Number($('monNew').value)||0)), diff = nv - cur.v;
+    if(!diff){ monEditClose(); return; }
+    const now = Date.now();
+    window.__addDeposit({id:now.toString(36)+Math.random().toString(36).slice(2,7), mkey:m._key, month:cur.k, amount:diff, date:today()});
+    monEditClose(); const t = $('depToast'); t.textContent = 'رقم درست ہو گئی ✓'; t.style.display = 'block'; setTimeout(()=>t.style.display='none', 2200);
+  };
+})();
 </script>
 <script>
 // لکھتے وقت (کی بورڈ کھلنے پر) فیلڈ کو نظر کے سامنے لانا
