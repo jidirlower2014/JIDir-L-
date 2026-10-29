@@ -3542,7 +3542,7 @@ function renderAll(){
   else if(activePage==='notif') renderNotifPage();
   else if(activePage==='cands'){ if(!(window.__candBusy && window.__candBusy())) renderCandPage(); }
   else if(activePage==='reports'){ if(!(window.__repBusy && window.__repBusy())) renderRep(); }
-  else if(activePage==='settings') renderSettings();
+  else if(activePage==='settings'){ if(!(window.__setBusy && window.__setBusy())) renderSettings(); }
   else renderArkanPage(zone);
 }
 
@@ -4674,7 +4674,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   function pdfFail(e, htmlFn){
     const why = (typeof html2canvas==='undefined' || !window.jspdf) ? 'PDF لائبریری لوڈ نہیں ہوئی (انٹرنیٹ چیک کریں)' : (e && e.message ? e.message : 'نامعلوم خرابی');
     toast('PDF فائل نہیں بن سکی: ' + why + ' — پرنٹ کھل رہا ہے، وہاں سے Save as PDF چنیں');
-    try{ document.getElementById('printSheet').innerHTML = htmlFn(); document.getElementById('printOverlay').classList.add('open'); setTimeout(()=>window.print(), 900); }catch(_){}
+    try{ document.getElementById('printSheet').innerHTML = __orgFix(htmlFn()); document.getElementById('printOverlay').classList.add('open'); setTimeout(()=>window.print(), 900); }catch(_){}
   }
   // ---------- امیدوار میں ترمیم ----------
   let editId = null;
@@ -4725,14 +4725,14 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const c = all().find(x=>x.id===id); if(!c) return;
     const w = (typeof toWaNumber==='function') ? toWaNumber(c.phone) : '';
     if(!w){ toast('اس امیدوار کا درست موبائل نمبر موجود نہیں'); return; }
-    const url = 'https://wa.me/' + w + '?text=' + encodeURIComponent(WELCOME_MSG);
+    const url = 'https://wa.me/' + w + '?text=' + encodeURIComponent(window.__wmsg || __orgFix(WELCOME_MSG));
     const win = window.open(url, '_blank'); if(!win) window.location.href = url;
   };
   window.candShow = function(){
     const l = list().slice().sort((a,b)=> zname(a.zone).localeCompare(zname(b.zone)) || a.created-b.created);
     if(!l.length){ toast('کوئی امیدوار موجود نہیں'); return; }
     const label = 'زون: ' + ((window.__role==='zone') ? zname(window.__zone) : (zf==='all' ? 'تمام زونز' : zname(zf)));
-    $('printSheet').innerHTML = buildCandHTML({list:l, label}); $('printOverlay').classList.add('open');
+    $('printSheet').innerHTML = __orgFix(buildCandHTML({list:l, label})); $('printOverlay').classList.add('open');
   };
   window.candZoneCh = function(){ $('cMuqam').innerHTML = mo($('cZone').value); };
   window.candZF = function(v){ zf = v; renderCandPage(); };
@@ -4857,6 +4857,17 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
         it.z = e.zone; it.mu = e.muqam;
       }
     });
+    const lastOf = t=>{ const a = ev.filter(e=>e.type===t); return a[a.length-1]; };
+    const orgE = lastOf('org'), wmE = lastOf('wmsg');
+    window.__org = orgE ? orgE.n : ''; window.__wmsg = wmE ? wmE.n : '';
+    const um = {}; ev.filter(e=>e.type==='user').forEach(e=>{ um[e.key] = e; });
+    window.__extraUsers = Object.keys(um).filter(k=>um[k].f!=='del').map(k=>({u:k, h:um[k].n, role:um[k].f, zone:um[k].zone||'', label:(um[k].x&&um[k].x.label)||um[k].f}));
+    ev.filter(e=>e.type==='zone').forEach(e=>{
+      let zo = DATA.zones.find(x=>x.id===e.zone);
+      if(zo){ zo.name = e.n; }
+      else if(window.__role!=='zone'){ zo = {id:e.zone, real:true, name:e.n, ameer:'', ameerContact:'', muqamat:[]}; DATA.zones.push(zo); if(!AR_DATA[e.zone]) AR_DATA[e.zone] = []; if(window.__link) window.__link[e.zone] = {}; }
+    });
+    applyOrg();
     const sessEv = ev.filter(e=>e.type==='session'); window.__sessions = sessEv;
     const ls = sessEv[sessEv.length-1];
     window.__sess = ls ? {label:ls.n, old:ls.f, start:String(ls.date||''), t:ls.t, snap:(ls.x && ls.x.snap) || {}} : null;
@@ -4903,10 +4914,29 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const pBefore = Object.keys(pend).length;
     Object.keys(pend).forEach(id=>{ if(ids.has(id)) delete pend[id]; });
     const pruned = pBefore !== Object.keys(pend).length;
-    save(); Object.keys(pend).forEach(id=>post(pend[id]));
+    save(); postMany(Object.keys(pend).map(k=>pend[k]));
     if(!pruned && prevSig === JSON.stringify(server)) return;
     rebuild();
   };
+  const ORG0 = 'جماعت اسلامی ضلع دیر پائین';
+  function applyOrg(){
+    const o = window.__org || ORG0; document.title = o;
+    const h = document.querySelector('header h1'); if(h) h.textContent = o;
+    const l = document.querySelector('.login-card h2'); if(l) l.textContent = o;
+    const f = document.getElementById('footNote'); if(f) f.innerHTML = esc(o) + '<br><small style="font-weight:400;opacity:.6;font-family:Inter,sans-serif;">v27.10-e</small>';
+  }
+  window.__orgFix = function(h){ const o = window.__org; if(!o) return h; return String(h).split('جماعت اسلامی ضلع دیر پائین').join(o).split('جماعت اسلامی، ضلع دیر پائین').join(o); };
+  function postMany(list){
+    const api = window.__api; if(!api || !api.url() || !list.length) return;
+    if(list.length <= 5){ list.forEach(post); return; }
+    for(let i=0; i<list.length; i+=300){
+      fetch(api.url(), {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({key:api.key(), action:'ark_bulk', es:list.slice(i,i+300)})}).catch(()=>{});
+    }
+  }
+  function addEvents(list){
+    list.forEach(e=>{ e.zn = zname(e.zone); pend[e.id] = e; });
+    save(); rebuild(); postMany(list); if(window.__api) setTimeout(window.__api.sync, 4000);
+  }
   function addEvent(e){
     e.zn = zname(e.zone); pend[e.id] = e; save(); rebuild();
     post(e).then(()=>{ if(window.__api) setTimeout(window.__api.sync, 3000); });
@@ -5055,8 +5085,103 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مالی سیشن</div><div class="rp-row"><b class="urdu">موجودہ سیشن: <span style="direction:ltr;display:inline-block;">'+esc(sessLabel())+'</span></b><span class="cand-sub" style="direction:ltr;">'+(window.__sess?esc(window.__sess.start):'')+'</span></div>'
       + '<button class="sheet-btn gold urdu" style="margin-top:10px;" onclick="sessOpen()"><span class="ic">🔄</span> نیا سیشن شروع کریں</button>'+(past?'<div class="rp-sec urdu">پچھلے سیشنز</div>'+past:'')+'</div>'
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">امراء میں تبدیلی</div><div class="rp-row" style="gap:8px;margin-bottom:10px;">'
-      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>';
+      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>' + secOrg() + secZones() + secImport() + secUsers() + secBackup();
+    stImHint();
   };
+
+  // ---------- سیٹنگز کے مزید حصے: ادارہ، زونز، امپورٹ، اکاؤنٹس، بیک اپ ----------
+  const today2 = ()=>today();
+  const ROLES = [['zone','زون ذمہ دار'],['cadmin','ایڈمن (امیدواران)'],['fadmin','ایڈمن (مالیات)'],['viewer','صرف دیکھنے والا']];
+  const zopts = (sel)=>DATA.zones.map(z=>'<option value="'+z.id+'"'+(z.id===sel?' selected':'')+'>'+esc(z.name)+'</option>').join('');
+  function secOrg(){
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">ادارے کی معلومات</div>'
+      + '<label class="dep-field"><span class="urdu">ادارے / ضلع کا نام (ہیڈر، PDF اور پیغامات میں)</span><input id="stOrg" class="urdu" value="'+esc(window.__org||ORG0)+'"></label>'
+      + '<label class="dep-field"><span class="urdu">امیدوار کو بھیجا جانے والا خوش آمدید پیغام (خالی = طے شدہ)</span><textarea id="stWm" class="urdu" style="min-height:90px;width:100%;box-sizing:border-box;">'+esc(window.__wmsg||'')+'</textarea></label>'
+      + '<button class="sheet-btn gold urdu" onclick="stSaveOrg()"><span class="ic">💾</span> محفوظ کریں</button></div>';
+  }
+  function secZones(){
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">زونز</div>'
+      + DATA.zones.map(z=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><b class="urdu">'+esc(z.name)+'</b><button class="tab-btn urdu" style="padding:6px 14px;" onclick="stZone(\''+z.id+'\')">✏️ نام</button></div>').join('')
+      + '<button class="sheet-btn gold urdu" onclick="stZone()"><span class="ic">➕</span> نیا زون شامل کریں</button></div>';
+  }
+  function secImport(){
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">📥 ڈیٹا امپورٹ (ایک ساتھ بہت سا ڈیٹا)</div>'
+      + '<div class="dep-row"><label class="dep-field"><span class="urdu">کیا شامل کرنا ہے</span><select id="imType" class="urdu" onchange="stImHint()"><option value="m">مقامات</option><option value="a">ارکان</option></select></label>'
+      + '<label class="dep-field"><span class="urdu">زون</span><select id="imZone" class="urdu">'+zopts(currentZone)+'</select></label></div>'
+      + '<p class="cand-sub urdu" id="imHint" style="line-height:1.9;"></p>'
+      + '<label class="dep-field"><span class="urdu">Excel سے CSV فائل چنیں</span><input type="file" id="imFile" accept=".csv,.txt" onchange="stImFile(this)"></label>'
+      + '<label class="dep-field"><span class="urdu">یا یہاں پیسٹ کریں (ہر سطر ایک اندراج)</span><textarea id="imText" class="urdu" style="min-height:110px;width:100%;box-sizing:border-box;"></textarea></label>'
+      + '<button class="sheet-btn gold urdu" onclick="stImport()"><span class="ic">✅</span> امپورٹ کریں</button></div>';
+  }
+  function secUsers(){
+    const ex = window.__extraUsers || [];
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">🔐 لاگ ان اکاؤنٹس</div>'
+      + (ex.map(u=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b style="direction:ltr;display:inline-block;">'+esc(u.u)+'</b><div class="cand-sub urdu">'+esc((ROLES.find(r=>r[0]===u.role)||[0,u.role])[1])+(u.zone?' • '+esc(zname(u.zone)):'')+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="stUserDel(\''+esc(u.u)+'\')">🗑</button></div>').join('') || '<div class="cand-sub urdu">ابھی کوئی اضافی اکاؤنٹ نہیں</div>')
+      + '<div class="rp-sec urdu">نیا اکاؤنٹ</div><div class="dep-row"><label class="dep-field"><span class="urdu">یوزر نیم (انگریزی)</span><input id="stUn" style="direction:ltr;text-align:left;" autocapitalize="none"></label><label class="dep-field"><span class="urdu">پاس ورڈ</span><input id="stPw" style="direction:ltr;text-align:left;" autocapitalize="none"></label></div>'
+      + '<div class="dep-row"><label class="dep-field"><span class="urdu">قسم</span><select id="stRole" class="urdu">'+ROLES.map(r=>'<option value="'+r[0]+'">'+r[1]+'</option>').join('')+'</select></label><label class="dep-field"><span class="urdu">زون (زون ذمہ دار کے لیے)</span><select id="stUz" class="urdu">'+zopts('')+'</select></label></div>'
+      + '<button class="sheet-btn gold urdu" onclick="stUserSave()"><span class="ic">➕</span> اکاؤنٹ بنائیں</button></div>';
+  }
+  function secBackup(){
+    const lb = Number((function(){ try{ return localStorage.getItem('jid_lastbk'); }catch(e){ return 0; } })()||0), days = lb ? Math.floor((Date.now()-lb)/86400000) : -1;
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">💾 بیک اپ اور بحالی</div>'
+      + '<p class="cand-sub urdu" style="line-height:1.9;color:'+(days<0||days>7?'var(--danger)':'var(--muted)')+';">'+(days<0?'⚠️ ابھی تک بیک اپ نہیں لیا گیا':'آخری بیک اپ: '+(days===0?'آج':days+' دن پہلے'))+'</p>'
+      + '<button class="sheet-btn gold urdu" onclick="bkDownload()"><span class="ic">⬇</span> بیک اپ فائل محفوظ کریں (فون / کمپیوٹر)</button>'
+      + '<button class="tab-btn urdu" style="width:100%;margin:0 0 8px;" onclick="bkShare()">📤 بیک اپ شیئر کریں (واٹس ایپ / ڈرائیو)</button>'
+      + '<label class="dep-field"><span class="urdu">بیک اپ سے بحالی (فائل چنیں)</span><input type="file" accept=".json,application/json" onchange="bkRestoreFile(this)"></label></div>';
+  }
+  window.stSaveOrg = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const now = Date.now(), name = $('stOrg').value.trim(), wm = $('stWm').value.trim();
+    if(name && name !== (window.__org||ORG0)) addEvent({id:now.toString(36)+'a'+Math.random().toString(36).slice(2,5), type:'org', reason:'ادارے کا نام', zone:'', muqam:'', n:name, f:'', c:'', key:'', date:today(), t:now});
+    if(wm !== (window.__wmsg||'')) addEvent({id:now.toString(36)+'b'+Math.random().toString(36).slice(2,5), type:'wmsg', reason:'خوش آمدید پیغام', zone:'', muqam:'', n:wm, f:'', c:'', key:'', date:today(), t:now+1});
+    toast('محفوظ ہو گیا ✓');
+  };
+  window.stZone = function(id){
+    if(window.__role!=='admin' || window.__ro) return;
+    const z = id ? DATA.zones.find(x=>x.id===id) : null;
+    const name = (prompt(z ? 'زون کا نیا نام' : 'نئے زون کا نام', z ? z.name : '') || '').trim(); if(!name) return;
+    let zid = id; if(!zid){ let k = DATA.zones.length + 1; while(DATA.zones.some(x=>x.id==='z'+k)) k++; zid = 'z'+k; }
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'zone', reason:z?'زون کا نام':'نیا زون', zone:zid, muqam:'', n:name, f:'', c:'', key:'zone:'+zid, date:today(), t:now});
+    toast(z ? 'نام بدل گیا ✓' : 'نیا زون شامل ہو گیا ✓');
+  };
+  window.stImHint = function(){ $('imHint').innerHTML = $('imType').value==='m' ? 'ہر سطر: <b>مقام کا نام</b> ، (اختیاری) <b>امیر کا نام</b> ، <b>امیر کا نمبر</b>' : 'ہر سطر: <b>مقام ، نام ، ولدیت ، رابطہ نمبر ، ضلعی رکنیت نمبر ، تاریخ منظوری (2025-12-31) ، ویلج کونسل ، پتہ</b> — پہلے 3 خانے ضروری ہیں'; };
+  window.stImFile = function(inp){ const f = inp.files[0]; if(!f) return; const r = new FileReader(); r.onload = ()=>{ $('imText').value = String(r.result).replace(/^\uFEFF/,''); }; r.readAsText(f, 'utf-8'); };
+  function parseLines(txt){ return txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{ const d = l.indexOf('\t')>-1 ? '\t' : (l.indexOf(',')<0 && l.indexOf('،')>-1 ? '،' : ','); return l.split(d).map(x=>x.trim().replace(/^"|"$/g,'')); }); }
+  window.stImport = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const type = $('imType').value, z = $('imZone').value, rows = parseLines($('imText').value);
+    if(!rows.length){ toast('پہلے ڈیٹا لکھیں یا فائل چنیں'); return; }
+    const now = Date.now(), evs = [], known = new Set(muqamNames(z)); let i = 0;
+    const mkid = ()=>now.toString(36)+(i++).toString(36)+Math.random().toString(36).slice(2,5);
+    const mkMuq = name=>{ if(!name || known.has(name)) return null; known.add(name); const id = mkid(); evs.push({id, type:'muqam', reason:'نیا مقام', zone:z, muqam:name, n:name, f:'', c:'', key:'muqam:'+id, date:today(), t:now+evs.length}); return id; };
+    rows.forEach((r,idx)=>{
+      if(idx===0 && /^(مقام|نام|name|muqam)$/i.test(r[0])) return;
+      if(type==='m'){ const id = mkMuq(r[0]); if(id && r[1]) evs.push({id:mkid(), type:'ameer', reason:'مقامی امیر کی تبدیلی', zone:z, muqam:r[0], n:r[1], f:'', c:r[2]||'', key:z+':n'+id, date:today(), t:now+evs.length, x:{kind:'m'}}); }
+      else { const mu = r[0], n = r[1]; if(!mu || !n) return; mkMuq(mu); const id = mkid(), since = /^\d{4}-\d{2}-\d{2}$/.test(r[5]||'') ? r[5] : today();
+        evs.push({id, type:'add', reason:'نیا رکن', zone:z, muqam:mu, n, f:r[2]||'', c:r[3]||'', key:'add:'+id, date:since, t:now+evs.length, x:{s:since, d:r[4]||'', vc:r[6]||'', addr:r[7]||''}}); }
+    });
+    if(!evs.length){ toast('کوئی نئی سطر نہیں ملی'); return; }
+    if(!confirm(evs.length+' اندراجات '+zname(z)+' میں شامل کریں؟')) return;
+    $('imText').value = ''; addEvents(evs); toast(evs.length+' اندراجات شامل ہو گئے ✓');
+  };
+  window.stUserSave = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const un = $('stUn').value.trim().toLowerCase(), pw = $('stPw').value, role = $('stRole').value, zone = role==='zone' ? $('stUz').value : '';
+    if(!/^[a-z0-9_.-]{3,}$/.test(un)){ toast('یوزر نیم انگریزی حروف/اعداد میں (کم از کم 3)'); return; }
+    if(pw.length < 4){ toast('پاس ورڈ کم از کم 4 حروف کا ہو'); return; }
+    if(un==='admin' || USERS.some(x=>x.u===un)){ toast('یہ یوزر نیم پہلے سے موجود ہے'); return; }
+    if(role==='zone' && !zone){ toast('زون منتخب کریں'); return; }
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'user', reason:'اکاؤنٹ', zone, muqam:'', n:sha256(AUTH_SALT+'|'+un+'|'+pw), f:role, c:'', key:un, date:today(), t:now, x:{label:(ROLES.find(r=>r[0]===role)||[0,role])[1]}});
+    toast('اکاؤنٹ بن گیا ✓ — یوزر نیم: '+un);
+  };
+  window.stUserDel = function(un){
+    if(window.__role!=='admin' || window.__ro || !confirm(un+' کا اکاؤنٹ ختم کریں؟')) return;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'user', reason:'اکاؤنٹ ختم', zone:'', muqam:'', n:'', f:'del', c:'', key:un, date:today(), t:now});
+  };
+  window.__setBusy = function(){ const ae = document.activeElement; return !!(ae && $('setPage') && $('setPage').contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)); };
   // امیر چننے کے لیے ارکان میں تلاش
   const normS = t=>String(t||'').replace(/[يى]/g,'ی').replace(/ك/g,'ک').replace(/[ةھهۃ]/g,'ہ').toLowerCase();
   let amRes = [];
@@ -5163,7 +5288,7 @@ window.buildPrintHTML = function(g){
   window.generatePdfBlob = async function(g){
     try{ await document.fonts.load('14px "Jameel Noori Nastaleeq"'); await document.fonts.ready; }catch(e){}
     const el = document.getElementById('printSheet');
-    el.innerHTML = buildPrintHTML(g);
+    el.innerHTML = __orgFix(buildPrintHTML(g));
     const oldW = el.style.width, oldB = el.style.boxSizing;
     const ov = el.closest('.print-overlay') || el.parentElement, ovOld = ov.style.cssText;
     ov.style.cssText = 'display:block;position:fixed;left:-10000px;top:0;width:794px;height:auto;overflow:visible;z-index:-1;visibility:visible;';   // چھپی ہوئی شیٹ کو سکرین سے باہر دکھا کر بنائیں
@@ -5681,6 +5806,78 @@ window.__idle = function(){
 })();
 </script>
 <script>
+// ================== بیک اپ اور بحالی ==================
+(function(){
+  const L = k=>{ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } };
+  const W = (k,v)=>{ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+  const U = (...lists)=>{ const m = {}; lists.forEach(l=>{ if(!l) return; if(Array.isArray(l)) l.forEach(x=>{ if(x && x.id!==undefined) m[x.id] = x; }); else Object.keys(l).forEach(k=>{ m[k] = l[k]; }); }); return Object.keys(m).map(k=>m[k]); };
+  const byId = a=>{ const o = {}; a.forEach(x=>{ o[x.id] = x; }); return o; };
+  function toast(t){ const e = document.getElementById('depToast'); e.textContent = t; e.style.display = 'block'; clearTimeout(e._h); e._h = setTimeout(()=>e.style.display='none', 3200); }
+  const stamp = ()=>{ const d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'_'+String(d.getHours()).padStart(2,'0')+String(d.getMinutes()).padStart(2,'0'); };
+  function build(){
+    const dn = L('jid_n_dels')||[], dc = L('jid_c_dels')||[], df = L('jid_rf_d')||[];
+    const data = {
+      deposits: U(L('jid_server'), L('jid_pending')),
+      notifications: U(L('jid_n_server'), L('jid_n_pend')).filter(x=>dn.indexOf(x.id)<0),
+      candidates: U(L('jid_c_server'), L('jid_c_pend')).filter(x=>dc.indexOf(x.id)<0),
+      arkLog: U(L('jid_a_server'), L('jid_a_pend')),
+      finEdits: U(L('jid_f_server'), L('jid_f_pend')),
+      reportForms: U(L('jid_rf_s'), L('jid_rf_p')).filter(x=>df.indexOf(x.id)<0),
+      reportData: U(L('jid_rd_s'), L('jid_rd_p'))
+    };
+    const snapshot = {
+      zones: DATA.zones.map(z=>({id:z.id, name:z.name, ameer:z.ameer, ameerContact:z.ameerContact, muqamat:z.muqamat.map(m=>({name:m.name, ameer:m.ameer, contact:m.contact, sabiqa:m.sabiqa, saalana:m.saalana, wasooli:m.wasooli, baqaya:m.baqaya, arkan:m.arkan, monthly:m.monthly}))})),
+      arkan: Object.keys(AR_DATA).map(z=>({zone:z, groups:AR_DATA[z].map(g=>({m:g.m, mem:g.mem.map(a=>({n:a.n, f:a.f, c:a.c, d:a.d, s:a.s, k:a.k, vc:a.vc, addr:a.addr}))}))}))
+    };
+    return {format:'jid-backup', version:1, created:new Date().toISOString(), org:(window.__org||document.title), session:(window.__sess?window.__sess.label:''), counts:Object.keys(data).reduce((o,k)=>{ o[k]=data[k].length; return o; },{}), data, snapshot};
+  }
+  async function file(){
+    if(window.__api && window.__api.url()){ try{ await window.__api.sync(); }catch(e){} }
+    const b = build(), blob = new Blob([JSON.stringify(b)], {type:'application/json'});
+    return new File([blob], 'backup-'+stamp()+'.json', {type:'application/json'});
+  }
+  window.bkDownload = async function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const f = await file(), a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 30000);
+    try{ localStorage.setItem('jid_lastbk', String(Date.now())); }catch(e){}
+    toast('بیک اپ فائل محفوظ ہو گئی ✓ (Downloads میں): '+f.name); if(activePage==='settings') renderSettings();
+  };
+  window.bkShare = async function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const f = await file();
+    if(navigator.canShare && navigator.canShare({files:[f]})){ try{ await navigator.share({files:[f], title:'بیک اپ'}); try{ localStorage.setItem('jid_lastbk', String(Date.now())); }catch(e){} return; }catch(e){ return; } }
+    toast('اس ڈیوائس پر شیئر دستیاب نہیں، بیک اپ ڈاؤن لوڈ ہو رہا ہے'); bkDownload();
+  };
+  window.bkRestoreFile = function(inp){
+    const f = inp.files[0]; if(!f) return;
+    if(window.__role!=='admin' || window.__ro) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      let o; try{ o = JSON.parse(r.result); }catch(e){ toast('یہ بیک اپ فائل درست نہیں'); return; }
+      if(!o || o.format!=='jid-backup' || !o.data){ toast('یہ ہمارے بیک اپ کی فائل نہیں'); return; }
+      const c = o.counts || {};
+      if(!confirm('بیک اپ ('+String(o.created||'').slice(0,10)+') بحال کریں؟\nجمع رقمیں: '+(c.deposits||0)+'، اطلاعات: '+(c.notifications||0)+'، امیدوار: '+(c.candidates||0)+'، ارکان/زون تبدیلیاں: '+(c.arkLog||0)+'، مالیاتی ترامیم: '+(c.finEdits||0)+'، رپورٹس: '+(c.reportForms||0)+'\n\nیہ ڈیٹا موجودہ ڈیٹا کے ساتھ شامل ہو کر Google Sheet میں بھی واپس بھیجا جائے گا۔')) return;
+      const d = o.data;
+      W('jid_server', []); W('jid_pending', d.deposits||[]);
+      W('jid_n_server', []); W('jid_n_pend', d.notifications||[]); W('jid_n_dels', []);
+      W('jid_c_server', []); W('jid_c_pend', byId(d.candidates||[])); W('jid_c_dels', []);
+      W('jid_a_server', []); W('jid_a_pend', byId(d.arkLog||[]));
+      W('jid_f_server', []); W('jid_f_pend', byId(d.finEdits||[]));
+      W('jid_rf_s', []); W('jid_rf_p', byId(d.reportForms||[])); W('jid_rf_d', []); W('jid_rd_s', []); W('jid_rd_p', byId(d.reportData||[]));
+      toast('بحالی ہو گئی، ایپ دوبارہ کھل رہی ہے…'); setTimeout(()=>location.reload(), 1200);
+    };
+    r.readAsText(f);
+  };
+  // یاد دہانی: 7 دن سے بیک اپ نہ لیا ہو
+  let warned = false;
+  setInterval(()=>{
+    if(warned || window.__role!=='admin' || window.__ro) return;
+    let lb = 0; try{ lb = Number(localStorage.getItem('jid_lastbk')||0); }catch(e){}
+    if(!lb || Date.now()-lb > 7*86400000){ warned = true; toast('⚠️ بیک اپ پرانا ہو گیا — سیٹنگز ← بیک اپ فائل محفوظ کریں'); }
+  }, 15000);
+})();
+</script>
+<script>
 // لکھتے وقت (کی بورڈ کھلنے پر) فیلڈ کو نظر کے سامنے لانا
 (function(){
   const root = document.documentElement;
@@ -5788,8 +5985,11 @@ function sha256(str){
     const un = $('loginUser').value.trim().toLowerCase();
     const pw = $('loginPass').value;
     const h = sha256(AUTH_SALT + '|' + un + '|' + pw);
-    const u = USERS.find(x=>x.u===un && x.h===h);
-    if(!u){ $('loginErr').textContent = 'یوزر نیم یا پاس ورڈ غلط ہے'; return; }
+    const u = USERS.concat(window.__extraUsers||[]).find(x=>x.u===un && x.h===h);
+    if(!u){
+      if(window.__api && window.__api.url() && !window.__loginRetry){ window.__loginRetry = true; $('loginErr').textContent = 'اکاؤنٹ چیک ہو رہا ہے…'; window.__api.sync().then(()=>{ window.__loginRetry = false; doLogin(); }); return; }
+      window.__loginRetry = false; $('loginErr').textContent = 'یوزر نیم یا پاس ورڈ غلط ہے'; return;
+    }
     $('loginErr').textContent = '';
     store('jid_session', u.u + '|' + u.h);
     $('loginPass').value = '';
@@ -5804,7 +6004,7 @@ function sha256(str){
   // پہلے سے لاگ ان ہو تو واپس بحال کریں
   const sess = load('jid_session');
   let restored = null;
-  if(sess){ const [su, sh] = sess.split('|'); restored = USERS.find(x=>x.u===su && x.h===sh) || null; }
+  if(sess){ const [su, sh] = sess.split('|'); restored = USERS.concat(window.__extraUsers||[]).find(x=>x.u===su && x.h===sh) || null; }
   if(restored){ applyUser(restored, false); }
   else { document.body.classList.add('locked'); $('loginOverlay').classList.add('open'); }
 })();
