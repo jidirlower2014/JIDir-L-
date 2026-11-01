@@ -556,6 +556,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
   <!-- HISAB KITAB PAGE -->
   <div id="hisabPage">
     <div class="dash-carousel" id="zoneCar"></div><div class="dash-dots" id="zoneDots"></div>
+    <button class="sheet-btn dep fin-btn urdu" style="width:100%;justify-content:center;margin-bottom:8px;" onclick="bulkWaOpen()"><span class="ic">📨</span> زون کے تمام مقامات کو واٹس ایپ پیغام</button>
     <input id="hisabSearch" class="rp-i urdu" style="text-align:right;padding:10px;margin:0 0 8px;" placeholder="🔍 مقام تلاش کریں" oninput="hisabFilter(this.value)">
     <div class="zone-ameer">
       <div><div class="urdu" id="zoneAmeerName"></div><div class="role">زون امیر</div></div>
@@ -4183,6 +4184,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <button class="sheet-cancel urdu" onclick="candAttClose()">منسوخ</button>
   </div>
 </div>
+<div class="sheet-overlay" id="bulkWaOverlay" onclick="if(event.target===this) bulkWaClose()">
+  <div class="action-sheet" style="max-height:92vh; overflow:auto;">
+    <h4 class="urdu" id="bwTitle"></h4>
+    <p class="sub urdu" id="bwSub" style="line-height:1.9;"></p>
+    <button class="sheet-btn wa urdu" id="bwNext" style="width:100%;justify-content:center;" onclick="bulkWaNext()"></button>
+    <div id="bwList" style="margin:10px 0;"></div>
+    <button class="tab-btn urdu" style="width:100%;margin-bottom:8px;" onclick="bulkWaReset()">🔄 دوبارہ شروع کریں</button>
+    <button class="sheet-cancel urdu" onclick="bulkWaClose()">بند کریں</button>
+  </div>
+</div>
 <div class="sheet-overlay" id="monEditOverlay" onclick="if(event.target===this) monEditClose()">
   <div class="action-sheet">
     <h4 class="urdu" id="monTitle"></h4>
@@ -4861,7 +4872,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const orgE = lastOf('org'), wmE = lastOf('wmsg');
     window.__org = orgE ? orgE.n : ''; window.__wmsg = wmE ? wmE.n : '';
     const um = {}; ev.filter(e=>e.type==='user').forEach(e=>{ um[e.key] = e; });
-    window.__extraUsers = Object.keys(um).filter(k=>um[k].f!=='del').map(k=>({u:k, h:um[k].n, role:um[k].f, zone:um[k].zone||'', label:(um[k].x&&um[k].x.label)||um[k].f}));
+    window.__extraUsers = Object.keys(um).filter(k=>um[k].f!=='del').map(k=>({u:k, h:um[k].n, role:um[k].f, zone:um[k].zone||'', label:(um[k].x&&um[k].x.label)||um[k].f, pe:(um[k].x&&um[k].x.pe)||''}));
     ev.filter(e=>e.type==='zone').forEach(e=>{
       let zo = DATA.zones.find(x=>x.id===e.zone);
       if(zo){ zo.name = e.n; }
@@ -4919,6 +4930,10 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     rebuild();
   };
   const ORG0 = 'جماعت اسلامی ضلع دیر پائین';
+  const BUILTIN_PE = {"adenzai": "5615346fb4398c99", "talash": "47442564b2728096", "hq": "5a4a3e24b23cc1cd", "balambat": "495b2965e47fd09d", "laalqila": "4546226aad73c78b", "samarbagh": "46503e2aba7d82cf", "munda": "06152a77b133df99", "khall": "42453d7da338c78d", "viewer1": "47582b7bb933c795", "viewer2": "48542a6da728d49a", "cadmin1": "5b142572bd2a8290", "fadmin1": "5718666be338c68e"};
+  const _ks = (key,n)=>{ const out = []; let i = 0; while(out.length < n){ const h = sha256('PWK|'+key+'|'+(i++)); for(let j=0; j<h.length && out.length<n; j+=2) out.push(parseInt(h.substr(j,2),16)); } return out; };
+  function pwEnc(pw, key){ const b = unescape(encodeURIComponent(pw)).split('').map(c=>c.charCodeAt(0)), k = _ks(key, b.length); return b.map((x,i)=>('0'+(x^k[i]).toString(16)).slice(-2)).join(''); }
+  function pwDec(hex, key){ const n = hex.length/2, k = _ks(key, n); let t = ''; for(let i=0;i<n;i++) t += String.fromCharCode(parseInt(hex.substr(i*2,2),16)^k[i]); try{ return decodeURIComponent(escape(t)); }catch(e){ return ''; } }
   function applyOrg(){
     const o = window.__org || ORG0; document.title = o;
     const h = document.querySelector('header h1'); if(h) h.textContent = o;
@@ -5113,14 +5128,29 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + '<label class="dep-field"><span class="urdu">یا یہاں پیسٹ کریں (ہر سطر ایک اندراج)</span><textarea id="imText" class="urdu" style="min-height:110px;width:100%;box-sizing:border-box;"></textarea></label>'
       + '<button class="sheet-btn gold urdu" onclick="stImport()"><span class="ic">✅</span> امپورٹ کریں</button></div>';
   }
+  const RL = {zone:'زون ذمہ دار', cadmin:'ایڈمن (امیدواران)', fadmin:'ایڈمن (مالیات)', viewer:'صرف دیکھنے والا', admin:'سپر ایڈمن'};
+  const pwOf = enc=>{ if(!enc) return '—'; if(!window.__apw) return '🔒'; return pwDec(enc, window.__apw) || '—'; };
   function secUsers(){
     const ex = window.__extraUsers || [];
-    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">🔐 لاگ ان اکاؤنٹس</div>'
-      + (ex.map(u=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b style="direction:ltr;display:inline-block;">'+esc(u.u)+'</b><div class="cand-sub urdu">'+esc((ROLES.find(r=>r[0]===u.role)||[0,u.role])[1])+(u.zone?' • '+esc(zname(u.zone)):'')+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="stUserDel(\''+esc(u.u)+'\')">🗑</button></div>').join('') || '<div class="cand-sub urdu">ابھی کوئی اضافی اکاؤنٹ نہیں</div>')
-      + '<div class="rp-sec urdu">نیا اکاؤنٹ</div><div class="dep-row"><label class="dep-field"><span class="urdu">یوزر نیم (انگریزی)</span><input id="stUn" style="direction:ltr;text-align:left;" autocapitalize="none"></label><label class="dep-field"><span class="urdu">پاس ورڈ</span><input id="stPw" style="direction:ltr;text-align:left;" autocapitalize="none"></label></div>'
+    const row = (u, builtin)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b style="direction:ltr;display:inline-block;">'+esc(u.u)+'</b><div class="cand-sub urdu">'+esc(RL[u.role]||u.role)+(u.zone?' • '+esc(zname(u.zone)):'')+'</div></div>'
+      + '<div style="text-align:left;"><div class="cand-sub urdu">پاس ورڈ</div><b style="direction:ltr;display:inline-block;font-family:monospace;font-size:15px;user-select:all;">'+esc(pwOf(builtin ? BUILTIN_PE[u.u] : u.pe))+'</b></div>'
+      + (builtin ? '' : '<div style="display:flex;gap:6px;"><button class="tab-btn urdu" style="padding:6px 10px;" onclick="stUserEdit(\''+esc(u.u)+'\')">✏️</button><button class="tab-btn urdu" style="padding:6px 10px;" onclick="stUserDel(\''+esc(u.u)+'\')">🗑</button></div>')+'</div>';
+    const lock = window.__apw ? '' : '<button class="sheet-btn gold urdu" style="margin-bottom:10px;" onclick="stUnlock()"><span class="ic">🔓</span> پاس ورڈ دیکھنے کے لیے سپر ایڈمن پاس ورڈ لکھیں</button>';
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">🔐 لاگ ان اکاؤنٹس اور پاس ورڈ (صرف سپر ایڈمن)</div>'+lock
+      + USERS.filter(u=>u.u!=='admin').map(u=>row(u,true)).join('') + ex.map(u=>row(u,false)).join('')
+      + '<div class="rp-sec urdu">نیا اکاؤنٹ / پاس ورڈ تبدیل</div><div class="dep-row"><label class="dep-field"><span class="urdu">یوزر نیم (انگریزی)</span><input id="stUn" style="direction:ltr;text-align:left;" autocapitalize="none"></label><label class="dep-field"><span class="urdu">پاس ورڈ</span><input id="stPw" style="direction:ltr;text-align:left;" autocapitalize="none"></label></div>'
       + '<div class="dep-row"><label class="dep-field"><span class="urdu">قسم</span><select id="stRole" class="urdu">'+ROLES.map(r=>'<option value="'+r[0]+'">'+r[1]+'</option>').join('')+'</select></label><label class="dep-field"><span class="urdu">زون (زون ذمہ دار کے لیے)</span><select id="stUz" class="urdu">'+zopts('')+'</select></label></div>'
-      + '<button class="sheet-btn gold urdu" onclick="stUserSave()"><span class="ic">➕</span> اکاؤنٹ بنائیں</button></div>';
+      + '<button class="sheet-btn gold urdu" onclick="stUserSave()"><span class="ic">➕</span> محفوظ کریں</button></div>';
   }
+  window.stUnlock = function(){
+    const p = prompt('سپر ایڈمن (admin) کا پاس ورڈ لکھیں'); if(!p) return;
+    const a = USERS.find(u=>u.u==='admin');
+    if(a && sha256(AUTH_SALT+'|admin|'+p) === a.h){ window.__apw = p; renderSettings(); toast('پاس ورڈ کھل گئے ✓'); } else toast('پاس ورڈ غلط ہے');
+  };
+  window.stUserEdit = function(un){
+    const u = (window.__extraUsers||[]).find(x=>x.u===un); if(!u) return;
+    $('stUn').value = u.u; $('stRole').value = u.role; if(u.zone) $('stUz').value = u.zone; $('stPw').value = ''; $('stPw').focus();
+  };
   function secBackup(){
     const lb = Number((function(){ try{ return localStorage.getItem('jid_lastbk'); }catch(e){ return 0; } })()||0), days = lb ? Math.floor((Date.now()-lb)/86400000) : -1;
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">💾 بیک اپ اور بحالی</div>'
@@ -5172,8 +5202,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if(pw.length < 4){ toast('پاس ورڈ کم از کم 4 حروف کا ہو'); return; }
     if(un==='admin' || USERS.some(x=>x.u===un)){ toast('یہ یوزر نیم پہلے سے موجود ہے'); return; }
     if(role==='zone' && !zone){ toast('زون منتخب کریں'); return; }
+    if(!window.__apw){ toast('پہلے "پاس ورڈ دیکھنے کے لیے" والے بٹن سے سپر ایڈمن پاس ورڈ لکھ کر ان لاک کریں'); return; }
     const now = Date.now();
-    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'user', reason:'اکاؤنٹ', zone, muqam:'', n:sha256(AUTH_SALT+'|'+un+'|'+pw), f:role, c:'', key:un, date:today(), t:now, x:{label:(ROLES.find(r=>r[0]===role)||[0,role])[1]}});
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'user', reason:'اکاؤنٹ', zone, muqam:'', n:sha256(AUTH_SALT+'|'+un+'|'+pw), f:role, c:'', key:un, date:today(), t:now, x:{label:(ROLES.find(r=>r[0]===role)||[0,role])[1], pe:pwEnc(pw, window.__apw)}});
     toast('اکاؤنٹ بن گیا ✓ — یوزر نیم: '+un);
   };
   window.stUserDel = function(un){
@@ -5714,7 +5745,7 @@ function togglePw(){
 // ================== بیک بٹن: قدم بہ قدم واپسی، ہوم پر دو بار دبانے سے ایپ بند ==================
 (function(){
   const CLOSERS = {depOverlay:'closeDeposit', arkDelOverlay:'arkDelClose', arkEditOverlay:'arkEditClose', arkAddOverlay:'arkAddClose', finEditOverlay:'finEditClose',
-                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose', monEditOverlay:'monEditClose'};
+                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose', monEditOverlay:'monEditClose', bulkWaOverlay:'bulkWaClose'};
   let exitAt = 0;
   const $ = id=>document.getElementById(id);
   function toast(m){ const t = $('depToast'); if(!t) return; t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2000); }
@@ -5878,6 +5909,61 @@ window.__idle = function(){
 })();
 </script>
 <script>
+// ================== مالیاتی پیغام (خوبصورت) + پورے زون کو ایک کے بعد ایک بھیجنا ==================
+(function(){
+  const $ = id=>document.getElementById(id);
+  const esc = t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function toast(m){ const t = $('depToast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2800); }
+  window.buildHisabMsg = function(m){
+    const months = MONTHS.filter(x=>((m.monthly||{})[x[0]]||0) > 0).map(x=>'وصولیاں ('+x[1]+'): '+fmt(m.monthly[x[0]])).join('\n');
+    const due = (m.sabiqa||0) + (m.saalana||0);
+    return '🌹 محترم جناب! 🌹\nالسلام علیکم ورحمۃ اللہ وبرکاتہ\n\n'
+      + 'امید ہے آپ خیریت سے ہوں گے۔ *'+m.name+'* کے مالیاتی ریکارڈ کی تفصیلات آپ کی خدمت میں پیشِ خدمت ہیں:\n\n'
+      + '👤 مقامی امیر: '+(m.ameer||'-')+'\n📞 رابطہ نمبر: '+(m.contact||'-')+'\n👥 تعداد ارکان: '+(m.arkan||0)+'\n\n'
+      + '📊 *مالیاتی گوشوارہ*\n'
+      + 'سابقہ بقایاجات: '+fmt(m.sabiqa)+'\n'
+      + 'سالانہ عائد شدہ اعانت: '+fmt(m.saalana)+'\n'
+      + 'کل واجب الادا رقم: '+fmt(due)+'\n'
+      + (months ? months+'\n' : '')
+      + 'کل وصولی: '+fmt(m.wasooli)+'\n'
+      + '💰 *باقی قابلِ ادائیگی رقم: '+fmt(m.baqaya)+'*\n\n'
+      + 'دینِ متین کی سرفرازی، دعوت و اصلاح کے اسلاف کے مشن کی بقا اور اجتماعی ذمہ داریوں کی بروقت تکمیل کے لیے آپ کا تعاون ہمارے لیے انتہائی قیمتی ہے۔ مالیاتی ذمہ داریوں کی بروقت ادائیگی نہ صرف اس دینی قافلے کی مضبوطی کا ضامن ہے بلکہ یہ ہمارے لیے صدقہ جاریہ اور آخرت کا توشہ بھی ہے۔\n\n'
+      + 'آپ سے پُرخلوص گزارش ہے کہ اس امانت کی ادائیگی میں اپنا حصہ ڈال کر اس مبارک سفر کو مزید آسان بنائیں۔ اللہ تعالیٰ آپ کے مال اور وقت میں بہترین برکت عطا فرمائے۔ آمین! 🤲';
+  };
+  function waOpen(contact, msg){
+    const w = (typeof toWaNumber==='function') ? toWaNumber(contact) : '';
+    if(!w) return false;
+    const url = 'https://wa.me/' + w + '?text=' + encodeURIComponent(msg);
+    const win = window.open(url, '_blank'); if(!win) window.location.href = url; return true;
+  }
+  window.sendHisabWhatsapp = function(){
+    const m = hisabTargetM; if(!m) return;
+    const msg = buildHisabMsg(m);
+    if(!waOpen(m.contact, msg)) shareText(msg, m.name+' مالیاتی ریکارڈ');
+  };
+
+  // ---- پورے زون کے مقامات: ایک بٹن سے اگلا پیغام ----
+  let sent = {};
+  const zone = ()=>DATA.zones.find(z=>z.id===currentZone);
+  const okNum = m=>!!((typeof toWaNumber==='function') && toWaNumber(m.contact));
+  function paint(){
+    const z = zone(); if(!z) return;
+    const ok = z.muqamat.filter(okNum), left = ok.filter(m=>!sent[m._key]).length;
+    $('bwTitle').textContent = '📨 ' + z.name + ' — تمام مقامات';
+    $('bwSub').innerHTML = 'کل مقامات: <b>'+z.muqamat.length+'</b> • نمبر والے: <b>'+ok.length+'</b> • بھیجنے باقی: <b>'+left+'</b><br>واٹس ایپ ہر پیغام آپ کے "Send" دبانے پر ہی بھیجتا ہے۔ ہر بار واٹس ایپ کھلے گا، Send دبا کر ایپ میں واپس آئیں اور اگلا دبائیں۔';
+    $('bwNext').textContent = left ? '▶ اگلا مقام بھیجیں ('+left+' باقی)' : '✅ سب مقامات کو بھیج دیا';
+    $('bwNext').disabled = !left;
+    $('bwList').innerHTML = z.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:6px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">'+esc(m.ameer||'-')+' • <span style="direction:ltr;display:inline-block;">'+esc(m.contact||'نمبر نہیں')+'</span></div></div>'
+      + (sent[m._key] ? '<span class="rp-st ok urdu">✓ بھیجا</span>' : okNum(m) ? '<button class="tab-btn urdu" style="padding:6px 12px;" onclick="bulkWaOne('+i+')">بھیجیں</button>' : '<span class="rp-st urdu">نمبر نہیں</span>')+'</div>').join('');
+  }
+  window.bulkWaOpen = function(){ if(!window.__can('fin') || !zone()) return; paint(); $('bulkWaOverlay').classList.add('open'); };
+  window.bulkWaClose = function(){ $('bulkWaOverlay').classList.remove('open'); };
+  window.bulkWaReset = function(){ sent = {}; paint(); };
+  window.bulkWaOne = function(i){ const m = zone().muqamat[i]; if(!m) return; if(waOpen(m.contact, buildHisabMsg(m))){ sent[m._key] = 1; setTimeout(paint, 300); } };
+  window.bulkWaNext = function(){ const z = zone(); const m = z && z.muqamat.find(x=>okNum(x) && !sent[x._key]); if(!m){ toast('سب کو بھیج دیا گیا'); return; } if(waOpen(m.contact, buildHisabMsg(m))){ sent[m._key] = 1; setTimeout(paint, 300); } };
+})();
+</script>
+<script>
 // لکھتے وقت (کی بورڈ کھلنے پر) فیلڈ کو نظر کے سامنے لانا
 (function(){
   const root = document.documentElement;
@@ -5991,6 +6077,7 @@ function sha256(str){
       window.__loginRetry = false; $('loginErr').textContent = 'یوزر نیم یا پاس ورڈ غلط ہے'; return;
     }
     $('loginErr').textContent = '';
+    if(u.u==='admin') window.__apw = pw;   // سپر ایڈمن کے پاس ورڈ سے اکاؤنٹس کے پاس ورڈ کھلتے ہیں (صرف میموری میں)
     store('jid_session', u.u + '|' + u.h);
     $('loginPass').value = '';
     applyUser(u, true);
