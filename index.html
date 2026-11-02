@@ -592,6 +592,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
     </table>
     <button class="sheet-btn dep fin-btn urdu" onclick="openDeposit()"><span class="ic">💰</span> روپے جمع کریں</button>
     <button class="sheet-btn dep fin-btn urdu" onclick="finEditOpen()"><span class="ic">✏️</span> مالیاتی ریکارڈ میں ترمیم</button>
+    <button class="sheet-btn dep urdu" id="muqDelBtn" style="display:none;" onclick="muqamDelete()"><span class="ic">🗑</span> مقام حذف کریں (خالی مقام)</button>
     <button class="sheet-btn wa urdu" style="width:100%; justify-content:center;" onclick="sendHisabWhatsapp()"><span class="ic">📲</span> یہ ریکارڈ واٹس ایپ پر بھیجیں</button>
   </div>
 
@@ -4123,6 +4124,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.__depRebuild = rebuild;
   window.__addDeposit = function(d){ pending.push(d); LS.set('jid_pending', pending); rebuild(); if(apiUrl()){ sendToSheet(d).then(()=>setTimeout(syncFromSheet, 3000)); } };
   window.__regMuqam = function(z, m){ const key = z.id+':'+(m.code||m.name); m._key = key; m._zone = z; m._base = {wasooli:0, baqaya:0, monthly:{}}; index[key] = m; };
+  window.__unregMuqam = function(m){ delete index[m._key]; };
   rebuild();
   syncFromSheet();
   setInterval(()=>{ if(!document.hidden) syncFromSheet(); }, 20000);
@@ -4889,8 +4891,15 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       else { const zo = DATA.zones.find(x=>x.id===e.zone); if(zo){ zo.ameer = e.n; zo.ameerContact = e.c; } }
     });
     window.__ameerM = amM;
-    ev.filter(e=>e.type==='muqam').forEach(e=>{
+    ev.filter(e=>e.type==='muqam' || e.type==='muqamdel').forEach(e=>{
       const zo = DATA.zones.find(x=>x.id===e.zone);
+      if(e.type==='muqamdel'){
+        if(zo){ const i = zo.muqamat.findIndex(m=>(e.x && e.x.k && m._key===e.x.k) || m.name===e.muqam); if(i>-1){ if(window.__unregMuqam) window.__unregMuqam(zo.muqamat[i]); zo.muqamat.splice(i,1); } }
+        const gn = (e.x && e.x.g) || e.muqam;
+        if(AR_DATA[e.zone]){ const gi = AR_DATA[e.zone].findIndex(g=>g.m===gn); if(gi>-1) AR_DATA[e.zone].splice(gi,1); }
+        if(window.__link && window.__link[e.zone]) delete window.__link[e.zone][e.muqam];
+        return;
+      }
       if(AR_DATA[e.zone] && !AR_DATA[e.zone].some(g=>g.m===e.muqam)) AR_DATA[e.zone].push({m:e.muqam, mem:[]});
       let fm = zo && zo.muqamat.find(m=>m.name===e.muqam);
       if(zo && !fm){
@@ -4969,6 +4978,9 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     lastG = g; _open(g);
     if(window.__role!=='admin' || window.__ro) return;
     if(!$('arkAddBtn')){ const list = $('adArkanNames'); const ab = document.createElement('button'); ab.id = 'arkAddBtn'; ab.className = 'sheet-btn dep urdu'; ab.innerHTML = '<span class="ic">➕</span> نیا رکن شامل کریں'; ab.onclick = arkAddOpen; list.parentNode.insertBefore(ab, list); }
+    { const list2 = $('adArkanNames'); let db = $('arkMuqDelBtn'); if(!db){ db = document.createElement('button'); db.id = 'arkMuqDelBtn'; db.className = 'sheet-btn dep urdu'; db.innerHTML = '<span class="ic">🗑</span> مقام حذف کریں (خالی مقام)'; db.onclick = muqamDelete; list2.parentNode.insertBefore(db, list2); }
+      const fmz = Object.keys(AR_DATA).find(k=>AR_DATA[k].indexOf(g)>-1), fm = fmz && (DATA.zones.find(x=>x.id===fmz)||{muqamat:[]}).muqamat.find(x=>x._g===g);
+      db.style.display = (g.mem.length===0 && (!fm || (fm.arkan||0)===0)) ? '' : 'none'; }
     document.querySelectorAll('#adArkanNames li').forEach((li,i)=>{
       const m = g.mem[i]; if(!m) return;
       const b = document.createElement('button');
@@ -5242,6 +5254,22 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,5), type:'session', reason:'نیا سیشن', zone:'', muqam:'', n:label, f:sessLabel(), c:'', key:'', date:start, t:now, x:{snap}});
     sessClose(); toast('نیا سیشن شروع ہو گیا ✓ — باقی سابقہ بقایاجات میں منتقل');
   };
+  // خالی مقام حذف کرنا (صرف سپر ایڈمن، جب مقام میں کوئی رکن نہ ہو)
+  window.muqamDelete = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    let m = null, g = null, z = null;
+    if($('arkanDetail').classList.contains('open') && lastG){ g = lastG; z = Object.keys(AR_DATA).find(k=>AR_DATA[k].indexOf(g)>-1); m = (DATA.zones.find(x=>x.id===z)||{muqamat:[]}).muqamat.find(x=>x._g===g) || null; }
+    else if($('hisabDetail').classList.contains('open') && hisabTargetM){ m = hisabTargetM; z = m._zone.id; g = m._g || null; }
+    const cnt = g ? g.mem.length : (m ? (m.arkan||0) : 0);
+    if(cnt > 0){ toast('اس مقام میں ارکان موجود ہیں، پہلے انہیں منتقل یا حذف کریں'); return; }
+    const name = m ? m.name : (g ? g.m : ''); if(!name || !z) return;
+    if(!confirm('مقام "'+name+'" ہمیشہ کے لیے حذف کریں؟ اس کا مالیاتی ریکارڈ بھی ختم ہو جائے گا۔')) return;
+    const now = Date.now();
+    if($('hisabDetail').classList.contains('open')) closeHisabDetail();
+    if($('arkanDetail').classList.contains('open')) closeArkanDetail();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'muqamdel', reason:'مقام حذف', zone:z, muqam:name, n:name, f:'', c:'', key:'', date:today(), t:now, x:{g:g?g.m:'', k:m?m._key:''}});
+    toast('مقام حذف ہو گیا ✓');
+  };
   window.arkDelClose = function(){ $('arkDelOverlay').classList.remove('open'); };
   window.arkRemove = function(reason){
     if(!curG || !curM || window.__ro) return;
@@ -5265,7 +5293,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -5818,6 +5846,7 @@ window.__idle = function(){
   window.openHisabDetail = function(){
     const r = oh.apply(this, arguments);
     try{ if(window.__role==='admin' && window.__can && window.__can('fin')) document.querySelectorAll('#hdMonthly .m').forEach((el,i)=>{ el.style.cursor = 'pointer'; el.title = 'رقم میں ترمیم'; el.onclick = ()=>monEditOpen(MONTHS[i][0], MONTHS[i][1]); }); }catch(e){}
+    try{ const m = hisabTargetM, db = document.getElementById('muqDelBtn'); if(db) db.style.display = (window.__role==='admin' && !window.__ro && m && ((m._g ? m._g.mem.length : (m.arkan||0)) === 0)) ? '' : 'none'; }catch(e){}
     return r;
   };
   window.monEditOpen = function(k, label){
