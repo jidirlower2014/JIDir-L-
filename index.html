@@ -498,6 +498,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
   #hdMonthly{grid-template-columns:repeat(6,1fr) !important;}
 }
 #hdMonthly .m{transition:transform .12s;} #hdMonthly .m:hover{transform:translateY(-2px);}
+.dep-field textarea,#setPage textarea{width:100%; box-sizing:border-box; padding:11px 10px; border-radius:10px; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-size:15px; line-height:1.9; font-family:inherit; resize:vertical;}
 </style>
 </head>
 <body>
@@ -4125,6 +4126,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   window.__addDeposit = function(d){ pending.push(d); LS.set('jid_pending', pending); rebuild(); if(apiUrl()){ sendToSheet(d).then(()=>setTimeout(syncFromSheet, 3000)); } };
   window.__regMuqam = function(z, m){ const key = z.id+':'+(m.code||m.name); m._key = key; m._zone = z; m._base = {wasooli:0, baqaya:0, monthly:{}}; index[key] = m; };
   window.__unregMuqam = function(m){ delete index[m._key]; };
+  window.__muqByKey = function(k){ return index[k]; };
   rebuild();
   syncFromSheet();
   setInterval(()=>{ if(!document.hidden) syncFromSheet(); }, 20000);
@@ -4184,6 +4186,16 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">انٹرویو</span><select id="attIv" class="urdu"><option value="">انٹرویو باقی</option><option value="present">انٹرویو دیا (نتیجہ باقی)</option><option value="pass">انٹرویو پاس</option><option value="fail">انٹرویو فیل</option></select></label>
     <button class="sheet-btn dep urdu" onclick="candAttSave()"><span class="ic">✅</span> محفوظ کریں</button>
     <button class="sheet-cancel urdu" onclick="candAttClose()">منسوخ</button>
+  </div>
+</div>
+<div class="sheet-overlay" id="muqEditOverlay" onclick="if(event.target===this) muqEditClose()">
+  <div class="action-sheet">
+    <h4 class="urdu">🏘 مقام: نام / زون</h4>
+    <p class="sub urdu" style="line-height:1.9;">زون بدلنے سے مقام کے سارے ارکان، مالیاتی ریکارڈ، جمع رقمیں اور امیر اس کے ساتھ نئے زون میں چلے جاتے ہیں۔</p>
+    <label class="dep-field"><span class="urdu">مقام کا نام</span><input id="meName" class="urdu"></label>
+    <label class="dep-field"><span class="urdu">زون</span><select id="meZone" class="urdu"></select></label>
+    <button class="sheet-btn gold urdu" onclick="muqEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
+    <button class="sheet-cancel urdu" onclick="muqEditClose()">منسوخ</button>
   </div>
 </div>
 <div class="sheet-overlay" id="bulkWaOverlay" onclick="if(event.target===this) bulkWaClose()">
@@ -4840,7 +4852,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   // ابتدائی (بیس لائن) اراکین کی کاپی اور ہر رکن کی منفرد کلید
   const base = {};
   Object.keys(AR_DATA).forEach(z=>{
-    base[z] = AR_DATA[z].map(g=>{ g.mem.forEach(m=>{ m._key = z+'|'+g.m+'|'+m.n+'|'+(m.d||'')+'|'+(m.c||''); }); return {g, mem:g.mem.slice()}; });
+    base[z] = AR_DATA[z].map(g=>{ g.mem.forEach(m=>{ m._key = z+'|'+g.m+'|'+m.n+'|'+(m.d||'')+'|'+(m.c||''); }); return {g, mem:g.mem.slice(), n0:g.m}; });
   });
   function events(){
     const map = {}; server.forEach(e=>map[e.id]=e); Object.keys(pend).forEach(id=>map[id]=pend[id]);
@@ -4856,7 +4868,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 
   function rebuild(){
     const ev = events(), items = [];
-    Object.keys(base).forEach(z=>base[z].forEach(b=>b.mem.forEach(m=>items.push({m, z, mu:b.g.m, key:m._key}))));
+    Object.keys(base).forEach(z=>base[z].forEach(b=>b.mem.forEach(m=>items.push({m, z, mu:b.n0, key:m._key}))));
     ev.forEach(e=>{
       if(e.type==='add') items.push({m:{n:e.n, f:e.f||'', c:e.c||'', k:'', d:(e.x&&e.x.d)||'', vc:(e.x&&e.x.vc)||'', addr:(e.x&&e.x.addr)||'', s:(e.x&&e.x.s)||e.date, _key:'add:'+e.id}, z:e.zone, mu:e.muqam, key:'add:'+e.id});
       else if(e.type==='remove'){ const i = items.findIndex(x=>x.key===e.key); if(i>-1) items.splice(i,1); }
@@ -4891,8 +4903,30 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       else { const zo = DATA.zones.find(x=>x.id===e.zone); if(zo){ zo.ameer = e.n; zo.ameerContact = e.c; } }
     });
     window.__ameerM = amM;
-    ev.filter(e=>e.type==='muqam' || e.type==='muqamdel').forEach(e=>{
+    const moves = [];
+    ev.filter(e=>e.type==='muqam' || e.type==='muqamdel' || e.type==='muqamedit').forEach(e=>{
       const zo = DATA.zones.find(x=>x.id===e.zone);
+      if(e.type==='muqamedit'){
+        const x = e.x || {}, to = x.to || e.zone, zt = DATA.zones.find(z=>z.id===to), gold = x.g || e.muqam, gnew = e.n;
+        let fm = zo && zo.muqamat.find(m=>(x.k && m._key===x.k) || m.name===e.muqam);
+        if(!fm && zt) fm = zt.muqamat.find(m=>(x.k && m._key===x.k) || m.name===gnew);
+        if(!fm && x.k && window.__muqByKey) fm = window.__muqByKey(x.k);
+        if(fm){
+          fm.name = gnew;
+          if(zo && zo!==zt){ const i = zo.muqamat.indexOf(fm); if(i>-1) zo.muqamat.splice(i,1); }
+          if(zt){ if(zt.muqamat.indexOf(fm)<0) zt.muqamat.push(fm); fm._zone = zt; }
+        }
+        let g = fm && fm._g;
+        if(!g){ const bb = (base[e.zone]||[]).find(b=>b.n0===gold); g = (AR_DATA[e.zone]||[]).find(q=>q.m===gold) || (AR_DATA[to]||[]).find(q=>q.m===gnew) || (bb && bb.g); }
+        if(g){
+          g.m = gnew;
+          if(e.zone!==to){ const fa = AR_DATA[e.zone]; if(fa){ const gi = fa.indexOf(g); if(gi>-1) fa.splice(gi,1); } const ta = AR_DATA[to]; if(ta && ta.indexOf(g)<0) ta.push(g); }
+          if(fm) fm._g = g;
+        }
+        if(window.__link){ if(window.__link[e.zone]) delete window.__link[e.zone][e.muqam]; if(!window.__link[to]) window.__link[to] = {}; window.__link[to][gnew] = gnew; }
+        moves.push({fz:e.zone, og:gold, tz:to, ng:gnew});
+        return;
+      }
       if(e.type==='muqamdel'){
         if(zo){ const i = zo.muqamat.findIndex(m=>(e.x && e.x.k && m._key===e.x.k) || m.name===e.muqam); if(i>-1){ if(window.__unregMuqam) window.__unregMuqam(zo.muqamat[i]); zo.muqamat.splice(i,1); } }
         const gn = (e.x && e.x.g) || e.muqam;
@@ -4909,6 +4943,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       const gg = AR_DATA[e.zone] && AR_DATA[e.zone].find(g=>g.m===e.muqam);
       if(fm && gg) fm._g = gg;
     });
+    moves.forEach(mv=>items.forEach(it=>{ if(it.z===mv.fz && it.mu===mv.og){ it.z = mv.tz; it.mu = mv.ng; } }));   // نام/زون کی تبدیلی کے مطابق ارکان کی جگہ
     Object.keys(AR_DATA).forEach(z=>AR_DATA[z].forEach(g=>{ g.mem = []; }));
     items.forEach(it=>{
       if(!AR_DATA[it.z]) return;
@@ -5112,7 +5147,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مالی سیشن</div><div class="rp-row"><b class="urdu">موجودہ سیشن: <span style="direction:ltr;display:inline-block;">'+esc(sessLabel())+'</span></b><span class="cand-sub" style="direction:ltr;">'+(window.__sess?esc(window.__sess.start):'')+'</span></div>'
       + '<button class="sheet-btn gold urdu" style="margin-top:10px;" onclick="sessOpen()"><span class="ic">🔄</span> نیا سیشن شروع کریں</button>'+(past?'<div class="rp-sec urdu">پچھلے سیشنز</div>'+past:'')+'</div>'
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">امراء میں تبدیلی</div><div class="rp-row" style="gap:8px;margin-bottom:10px;">'
-      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>' + secOrg() + secZones() + secImport() + secUsers() + secBackup();
+      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>' + secOrg() + secZones() + secMuqamat() + secImport() + secUsers() + secBackup();
     stImHint();
   };
 
@@ -5131,6 +5166,31 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + DATA.zones.map(z=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><b class="urdu">'+esc(z.name)+'</b><button class="tab-btn urdu" style="padding:6px 14px;" onclick="stZone(\''+z.id+'\')">✏️ نام</button></div>').join('')
       + '<button class="sheet-btn gold urdu" onclick="stZone()"><span class="ic">➕</span> نیا زون شامل کریں</button></div>';
   }
+  // ---------- مقام کا نام بدلنا / دوسرے زون میں منتقل کرنا ----------
+  let mqZ = '', meT = null;
+  window.mqZone = function(v){ mqZ = v; renderSettings(); };
+  function secMuqamat(){
+    const zo = DATA.zones.find(x=>x.id===mqZ);
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">🏘 مقامات: نام بدلیں / دوسرے زون میں منتقل کریں</div>'
+      + '<label class="dep-field"><span class="urdu">زون منتخب کریں</span><select class="urdu" onchange="mqZone(this.value)"><option value="">— زون منتخب کریں —</option>'+zopts(mqZ)+'</select></label>'
+      + (zo ? zo.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">ارکان: '+(m._g ? m._g.mem.length : (m.arkan||0))+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="muqEditOpen(\''+zo.id+'\','+i+')">✏️ نام / زون</button></div>').join('') : '') + '</div>';
+  }
+  window.muqEditOpen = function(z, i){
+    if(window.__role!=='admin' || window.__ro) return;
+    const zo = DATA.zones.find(x=>x.id===z), m = zo && zo.muqamat[i]; if(!m) return;
+    meT = {z, m}; $('meName').value = m.name; $('meZone').innerHTML = zopts(z); $('muqEditOverlay').classList.add('open');
+  };
+  window.muqEditClose = function(){ $('muqEditOverlay').classList.remove('open'); meT = null; };
+  window.muqEditSave = function(){
+    if(!meT || window.__role!=='admin' || window.__ro) return;
+    const name = $('meName').value.trim(), to = $('meZone').value, m = meT.m, z = meT.z;
+    if(!name){ toast('مقام کا نام لکھیں'); return; }
+    if((DATA.zones.find(x=>x.id===to)||{muqamat:[]}).muqamat.some(q=>q!==m && q.name===name)){ toast('اس زون میں یہ نام پہلے سے موجود ہے'); return; }
+    if(name===m.name && to===z){ muqEditClose(); toast('کوئی تبدیلی نہیں کی'); return; }
+    const now = Date.now(), g = m._g, moved = (to!==z);
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'muqamedit', reason:moved?'مقام منتقل':'مقام کا نام', zone:z, muqam:m.name, n:name, f:'', c:'', key:'', date:today(), t:now, x:{k:m._key, g:g?g.m:m.name, to}});
+    muqEditClose(); toast(moved ? 'مقام '+zname(to)+' میں منتقل ہو گیا ✓' : 'مقام کا نام بدل گیا ✓');
+  };
   function secImport(){
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">📥 ڈیٹا امپورٹ (ایک ساتھ بہت سا ڈیٹا)</div>'
       + '<div class="dep-row"><label class="dep-field"><span class="urdu">کیا شامل کرنا ہے</span><select id="imType" class="urdu" onchange="stImHint()"><option value="m">مقامات</option><option value="a">ارکان</option></select></label>'
@@ -5293,7 +5353,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='muqamedit' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -5773,7 +5833,7 @@ function togglePw(){
 // ================== بیک بٹن: قدم بہ قدم واپسی، ہوم پر دو بار دبانے سے ایپ بند ==================
 (function(){
   const CLOSERS = {depOverlay:'closeDeposit', arkDelOverlay:'arkDelClose', arkEditOverlay:'arkEditClose', arkAddOverlay:'arkAddClose', finEditOverlay:'finEditClose',
-                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose', monEditOverlay:'monEditClose', bulkWaOverlay:'bulkWaClose'};
+                   ameerOverlay:'ameerClose', attOverlay:'candAttClose', candEditOverlay:'candEditClose', themeOverlay:'closeTheme', sessOverlay:'sessClose', monEditOverlay:'monEditClose', bulkWaOverlay:'bulkWaClose', muqEditOverlay:'muqEditClose'};
   let exitAt = 0;
   const $ = id=>document.getElementById(id);
   function toast(m){ const t = $('depToast'); if(!t) return; t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2000); }
