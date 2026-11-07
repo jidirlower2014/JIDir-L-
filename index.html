@@ -4725,6 +4725,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   };
   const WELCOME_MSG = `🌹 خوش آمدید، مستقبل کے ساتھی! 🌹
 
+محترم *{نام}* صاحب!
 السلام علیکم ورحمۃ اللہ وبرکاتہ!
 
 ✨ مبارک ہو! آپ نے ایک بامقصد سفر کا آغاز کیا ہے۔
@@ -4746,11 +4747,15 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
 عطاء اللہ شاہین
 ناظم شعبہ تربیت
 جماعت اسلامی، ضلع دیر پائین`;
+  window.__welcomeDefault = WELCOME_MSG;
+  function candMsg(c){
+    return (window.__wmsg || __orgFix(WELCOME_MSG)).split('{نام}').join(c.name||'').split('{ولدیت}').join(c.father||'').split('{مقام}').join(c.muqam||'');
+  }
   window.candWelcome = function(id){
     const c = all().find(x=>x.id===id); if(!c) return;
     const w = (typeof toWaNumber==='function') ? toWaNumber(c.phone) : '';
     if(!w){ toast('اس امیدوار کا درست موبائل نمبر موجود نہیں'); return; }
-    const url = 'https://wa.me/' + w + '?text=' + encodeURIComponent(window.__wmsg || __orgFix(WELCOME_MSG));
+    const url = 'https://wa.me/' + w + '?text=' + encodeURIComponent(candMsg(c));
     const win = window.open(url, '_blank'); if(!win) window.location.href = url;
   };
   window.candShow = function(){
@@ -4883,8 +4888,8 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       }
     });
     const lastOf = t=>{ const a = ev.filter(e=>e.type===t); return a[a.length-1]; };
-    const orgE = lastOf('org'), wmE = lastOf('wmsg');
-    window.__org = orgE ? orgE.n : ''; window.__wmsg = wmE ? wmE.n : '';
+    const orgE = lastOf('org'), wmE = lastOf('wmsg'), fmE = lastOf('fmsg');
+    window.__org = orgE ? orgE.n : ''; window.__wmsg = wmE ? wmE.n : ''; window.__fmsg = fmE ? fmE.n : '';
     const um = {}; ev.filter(e=>e.type==='user').forEach(e=>{ um[e.key] = e; });
     window.__extraUsers = Object.keys(um).filter(k=>um[k].f!=='del').map(k=>({u:k, h:um[k].n, role:um[k].f, zone:um[k].zone||'', label:(um[k].x&&um[k].x.label)||um[k].f, pe:(um[k].x&&um[k].x.pe)||''}));
     ev.filter(e=>e.type==='zone').forEach(e=>{
@@ -5156,10 +5161,17 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   const ROLES = [['zone','زون ذمہ دار'],['cadmin','ایڈمن (امیدواران)'],['fadmin','ایڈمن (مالیات)'],['viewer','صرف دیکھنے والا']];
   const zopts = (sel)=>DATA.zones.map(z=>'<option value="'+z.id+'"'+(z.id===sel?' selected':'')+'>'+esc(z.name)+'</option>').join('');
   function secOrg(){
+    const wmDef = window.__welcomeDefault || '', fDef = window.__finDefault || '';
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">ادارے کی معلومات</div>'
       + '<label class="dep-field"><span class="urdu">ادارے / ضلع کا نام (ہیڈر، PDF اور پیغامات میں)</span><input id="stOrg" class="urdu" value="'+esc(window.__org||ORG0)+'"></label>'
-      + '<label class="dep-field"><span class="urdu">امیدوار کو بھیجا جانے والا خوش آمدید پیغام (خالی = طے شدہ)</span><textarea id="stWm" class="urdu" style="min-height:90px;width:100%;box-sizing:border-box;">'+esc(window.__wmsg||'')+'</textarea></label>'
-      + '<button class="sheet-btn gold urdu" onclick="stSaveOrg()"><span class="ic">💾</span> محفوظ کریں</button></div>';
+      + '<button class="sheet-btn gold urdu" onclick="stSaveOrg()"><span class="ic">💾</span> نام محفوظ کریں</button></div>'
+      + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">✉️ واٹس ایپ پیغامات میں ترمیم</div>'
+      + '<label class="dep-field"><span class="urdu">1) امیدوار کو خوش آمدید پیغام (نام کے ساتھ جاتا ہے)</span><textarea id="stWm" class="urdu" style="min-height:190px;">'+esc(window.__wmsg||wmDef)+'</textarea></label>'
+      + '<p class="cand-sub urdu" style="line-height:2;">ٹیگز (بھیجتے وقت اصل نام لگ جاتا ہے): <b style="direction:ltr;display:inline-block;">{نام}</b> امیدوار کا نام، <b style="direction:ltr;display:inline-block;">{ولدیت}</b> ولدیت، <b style="direction:ltr;display:inline-block;">{مقام}</b> مقام</p>'
+      + '<label class="dep-field"><span class="urdu">2) مقام کو مالیاتی پیغام</span><textarea id="stFm" class="urdu" style="min-height:260px;">'+esc(window.__fmsg||fDef)+'</textarea></label>'
+      + '<p class="cand-sub urdu" style="line-height:2;">ٹیگز: <b style="direction:ltr;display:inline-block;">{مقام}</b> <b style="direction:ltr;display:inline-block;">{امیر}</b> <b style="direction:ltr;display:inline-block;">{نمبر}</b> <b style="direction:ltr;display:inline-block;">{ارکان}</b> <b style="direction:ltr;display:inline-block;">{سابقہ}</b> <b style="direction:ltr;display:inline-block;">{اعانت}</b> <b style="direction:ltr;display:inline-block;">{واجب}</b> <b style="direction:ltr;display:inline-block;">{وصولیاں}</b> <b style="direction:ltr;display:inline-block;">{وصولی}</b> <b style="direction:ltr;display:inline-block;">{باقی}</b></p>'
+      + '<button class="sheet-btn gold urdu" onclick="stSaveMsgs()"><span class="ic">💾</span> پیغامات محفوظ کریں</button>'
+      + '<button class="tab-btn urdu" style="width:100%;margin-top:8px;" onclick="stResetMsgs()">↩ دونوں پیغامات طے شدہ حالت پر لائیں</button></div>';
   }
   function secZones(){
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">زونز</div>'
@@ -5173,8 +5185,18 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const zo = DATA.zones.find(x=>x.id===mqZ);
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">🏘 مقامات: نام بدلیں / دوسرے زون میں منتقل کریں</div>'
       + '<label class="dep-field"><span class="urdu">زون منتخب کریں</span><select class="urdu" onchange="mqZone(this.value)"><option value="">— زون منتخب کریں —</option>'+zopts(mqZ)+'</select></label>'
-      + (zo ? zo.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">ارکان: '+(m._g ? m._g.mem.length : (m.arkan||0))+'</div></div><button class="tab-btn urdu" style="padding:6px 14px;" onclick="muqEditOpen(\''+zo.id+'\','+i+')">✏️ نام / زون</button></div>').join('') : '') + '</div>';
+      + (zo ? zo.muqamat.map((m,i)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b class="urdu">'+esc(m.name)+'</b><div class="cand-sub urdu">ارکان: '+(m._g ? m._g.mem.length : (m.arkan||0))+'</div></div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="tab-btn urdu" style="padding:6px 14px;" onclick="muqEditOpen(\''+zo.id+'\','+i+')">✏️ نام / زون</button>'+((m._g ? m._g.mem.length : (m.arkan||0))===0 ? '<button class="tab-btn urdu" style="padding:6px 14px;border-color:var(--danger);color:var(--danger);" onclick="muqDelRow(\''+zo.id+'\','+i+')">🗑 حذف</button>' : '')+'</div></div>').join('') : '') + '</div>';
   }
+  window.muqDelRow = function(z, i){
+    if(window.__role!=='admin' || window.__ro) return;
+    const zo = DATA.zones.find(x=>x.id===z), m = zo && zo.muqamat[i]; if(!m) return;
+    const g = m._g, cnt = g ? g.mem.length : (m.arkan||0);
+    if(cnt > 0){ toast('اس مقام میں ارکان موجود ہیں، پہلے انہیں منتقل یا حذف کریں'); return; }
+    if(!confirm('مقام "'+m.name+'" ہمیشہ کے لیے حذف کریں؟ اس کا مالیاتی ریکارڈ بھی ختم ہو جائے گا۔')) return;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'muqamdel', reason:'مقام حذف', zone:z, muqam:m.name, n:m.name, f:'', c:'', key:'', date:today(), t:now, x:{g:g?g.m:'', k:m._key}});
+    toast('مقام حذف ہو گیا ✓');
+  };
   window.muqEditOpen = function(z, i){
     if(window.__role!=='admin' || window.__ro) return;
     const zo = DATA.zones.find(x=>x.id===z), m = zo && zo.muqamat[i]; if(!m) return;
@@ -5233,10 +5255,30 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   }
   window.stSaveOrg = function(){
     if(window.__role!=='admin' || window.__ro) return;
-    const now = Date.now(), name = $('stOrg').value.trim(), wm = $('stWm').value.trim();
+    const now = Date.now(), name = $('stOrg').value.trim();
     if(name && name !== (window.__org||ORG0)) addEvent({id:now.toString(36)+'a'+Math.random().toString(36).slice(2,5), type:'org', reason:'ادارے کا نام', zone:'', muqam:'', n:name, f:'', c:'', key:'', date:today(), t:now});
-    if(wm !== (window.__wmsg||'')) addEvent({id:now.toString(36)+'b'+Math.random().toString(36).slice(2,5), type:'wmsg', reason:'خوش آمدید پیغام', zone:'', muqam:'', n:wm, f:'', c:'', key:'', date:today(), t:now+1});
     toast('محفوظ ہو گیا ✓');
+  };
+  function saveMsg(type, val, def, cur, k){
+    const v = (val.trim()===def.trim()) ? '' : val.trim();
+    if(v === (cur||'')) return false;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+k+Math.random().toString(36).slice(2,5), type, reason:'پیغام', zone:'', muqam:'', n:v, f:'', c:'', key:'', date:today(), t:now+(k==='f'?1:0)});
+    return true;
+  }
+  window.stSaveMsgs = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const wv = $('stWm').value, fv = $('stFm').value;   // پہلے دونوں پڑھ لیں (محفوظ کرنے پر صفحہ دوبارہ بنتا ہے)
+    const a = saveMsg('wmsg', wv, window.__welcomeDefault||'', window.__wmsg, 'w');
+    const b = saveMsg('fmsg', fv, window.__finDefault||'', window.__fmsg, 'f');
+    toast(a||b ? 'پیغامات محفوظ ہو گئے ✓' : 'کوئی تبدیلی نہیں');
+  };
+  window.stResetMsgs = function(){
+    if(window.__role!=='admin' || window.__ro || !confirm('دونوں پیغامات طے شدہ حالت پر لائیں؟')) return;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+'rw'+Math.random().toString(36).slice(2,5), type:'wmsg', reason:'پیغام', zone:'', muqam:'', n:'', f:'', c:'', key:'', date:today(), t:now});
+    addEvent({id:now.toString(36)+'rf'+Math.random().toString(36).slice(2,5), type:'fmsg', reason:'پیغام', zone:'', muqam:'', n:'', f:'', c:'', key:'', date:today(), t:now+1});
+    toast('طے شدہ پیغامات بحال ہو گئے ✓');
   };
   window.stZone = function(id){
     if(window.__role!=='admin' || window.__ro) return;
@@ -5353,7 +5395,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='muqamedit' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='muqamedit' && e.type!=='wmsg' && e.type!=='fmsg' && e.type!=='org' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -6003,21 +6045,34 @@ window.__idle = function(){
   const $ = id=>document.getElementById(id);
   const esc = t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   function toast(m){ const t = $('depToast'); t.textContent = m; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(()=>t.style.display='none', 2800); }
+  const FIN_TPL = `🌹 محترم جناب! 🌹
+السلام علیکم ورحمۃ اللہ وبرکاتہ
+
+امید ہے آپ خیریت سے ہوں گے۔ *{مقام}* کے مالیاتی ریکارڈ کی تفصیلات آپ کی خدمت میں پیشِ خدمت ہیں:
+
+👤 مقامی امیر: {امیر}
+📞 رابطہ نمبر: {نمبر}
+👥 تعداد ارکان: {ارکان}
+
+📊 *مالیاتی گوشوارہ*
+سابقہ بقایاجات: {سابقہ}
+سالانہ عائد شدہ اعانت: {اعانت}
+کل واجب الادا رقم: {واجب}
+{وصولیاں}
+کل وصولی: {وصولی}
+💰 *باقی قابلِ ادائیگی رقم: {باقی}*
+
+دینِ متین کی سرفرازی، دعوت و اصلاح کے اسلاف کے مشن کی بقا اور اجتماعی ذمہ داریوں کی بروقت تکمیل کے لیے آپ کا تعاون ہمارے لیے انتہائی قیمتی ہے۔ مالیاتی ذمہ داریوں کی بروقت ادائیگی نہ صرف اس دینی قافلے کی مضبوطی کا ضامن ہے بلکہ یہ ہمارے لیے صدقہ جاریہ اور آخرت کا توشہ بھی ہے۔
+
+آپ سے پُرخلوص گزارش ہے کہ اس امانت کی ادائیگی میں اپنا حصہ ڈال کر اس مبارک سفر کو مزید آسان بنائیں۔ اللہ تعالیٰ آپ کے مال اور وقت میں بہترین برکت عطا فرمائے۔ آمین! 🤲`;
+  window.__finDefault = FIN_TPL;
   window.buildHisabMsg = function(m){
     const months = MONTHS.filter(x=>((m.monthly||{})[x[0]]||0) > 0).map(x=>'وصولیاں ('+x[1]+'): '+fmt(m.monthly[x[0]])).join('\n');
     const due = (m.sabiqa||0) + (m.saalana||0);
-    return '🌹 محترم جناب! 🌹\nالسلام علیکم ورحمۃ اللہ وبرکاتہ\n\n'
-      + 'امید ہے آپ خیریت سے ہوں گے۔ *'+m.name+'* کے مالیاتی ریکارڈ کی تفصیلات آپ کی خدمت میں پیشِ خدمت ہیں:\n\n'
-      + '👤 مقامی امیر: '+(m.ameer||'-')+'\n📞 رابطہ نمبر: '+(m.contact||'-')+'\n👥 تعداد ارکان: '+(m.arkan||0)+'\n\n'
-      + '📊 *مالیاتی گوشوارہ*\n'
-      + 'سابقہ بقایاجات: '+fmt(m.sabiqa)+'\n'
-      + 'سالانہ عائد شدہ اعانت: '+fmt(m.saalana)+'\n'
-      + 'کل واجب الادا رقم: '+fmt(due)+'\n'
-      + (months ? months+'\n' : '')
-      + 'کل وصولی: '+fmt(m.wasooli)+'\n'
-      + '💰 *باقی قابلِ ادائیگی رقم: '+fmt(m.baqaya)+'*\n\n'
-      + 'دینِ متین کی سرفرازی، دعوت و اصلاح کے اسلاف کے مشن کی بقا اور اجتماعی ذمہ داریوں کی بروقت تکمیل کے لیے آپ کا تعاون ہمارے لیے انتہائی قیمتی ہے۔ مالیاتی ذمہ داریوں کی بروقت ادائیگی نہ صرف اس دینی قافلے کی مضبوطی کا ضامن ہے بلکہ یہ ہمارے لیے صدقہ جاریہ اور آخرت کا توشہ بھی ہے۔\n\n'
-      + 'آپ سے پُرخلوص گزارش ہے کہ اس امانت کی ادائیگی میں اپنا حصہ ڈال کر اس مبارک سفر کو مزید آسان بنائیں۔ اللہ تعالیٰ آپ کے مال اور وقت میں بہترین برکت عطا فرمائے۔ آمین! 🤲';
+    let t = (window.__fmsg || FIN_TPL).replace(/\{وصولیاں\}\n?/g, months ? months+'\n' : '');
+    const map = {'{مقام}':m.name, '{امیر}':m.ameer||'-', '{نمبر}':m.contact||'-', '{ارکان}':m.arkan||0, '{سابقہ}':fmt(m.sabiqa), '{اعانت}':fmt(m.saalana), '{واجب}':fmt(due), '{وصولی}':fmt(m.wasooli), '{باقی}':fmt(m.baqaya)};
+    Object.keys(map).forEach(k=>{ t = t.split(k).join(String(map[k])); });
+    return t;
   };
   function waOpen(contact, msg){
     const w = (typeof toWaNumber==='function') ? toWaNumber(contact) : '';
