@@ -3975,7 +3975,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       if(fe){ m.sabiqa = fe.sabiqa; m.saalana = fe.saalana; m.ameer = fe.ameer; m.contact = fe.contact; m.wasooli = fe.wasooli; m.baqaya = fe.sabiqa + fe.saalana - fe.wasooli; }
       { const am = (window.__ameerM||{})[m._key]; if(am && (!fe || am.t >= fe.t)){ m.ameer = am.n; m.contact = am.c; } }
       { const grp = m._g, cnt = grp ? grp.mem.length : (m.arkan||0);
-        if(grp) m.arkan = cnt; const ex = (fe && fe.ex) || 0, sm = fe && fe.sm; m.saalana = (sm!==undefined && sm!==null && sm!=='') ? Number(sm) : Math.max(0, cnt - ex) * 4800; m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
+        if(grp) m.arkan = cnt; const ex = (fe && fe.ex) || 0, sm = fe && fe.sm; m.saalana = (sm!==undefined && sm!==null && sm!=='') ? Number(sm) : Math.max(0, cnt - ex) * (window.__rate || 4800); m.baqaya = (m.sabiqa||0) + m.saalana - m.wasooli; }
     });
     const seen = new Set();
     server.concat(pending).forEach(d=>{
@@ -4157,7 +4157,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     <label class="dep-field"><span class="urdu">مقامی امیر</span><input id="fAmeer" class="urdu"></label>
     <label class="dep-field"><span class="urdu">رابطہ نمبر</span><input id="fContact" type="tel" inputmode="tel"></label>
     <label class="dep-field"><span class="urdu">سابقہ بقایاجات</span><input id="fSabiqa" type="number" inputmode="numeric" min="0"></label>
-    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت — دستی (خالی چھوڑیں تو ارکان × 4800 خود)</span><input id="fSaalana" type="number" inputmode="numeric" min="0" placeholder="خودکار"></label>
+    <label class="dep-field"><span class="urdu">سالانہ عائد شدہ اعانت — دستی (خالی چھوڑیں تو ارکان × فی رکن سالانہ رقم خود)</span><input id="fSaalana" type="number" inputmode="numeric" min="0" placeholder="خودکار"></label>
     <label class="dep-field"><span class="urdu">قاصر / معاف ارکان کی تعداد (بیمار وغیرہ، ان کی اعانت نہیں لگے گی)</span><input id="fEx" type="number" inputmode="numeric" min="0"></label>
     <label class="dep-field"><span class="urdu">کل وصولی</span><input id="fWasooli" type="number" inputmode="numeric" min="0"></label>
     <button class="sheet-btn dep urdu" onclick="finEditSave()"><span class="ic">✅</span> محفوظ کریں</button>
@@ -4888,6 +4888,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       }
     });
     const lastOf = t=>{ const a = ev.filter(e=>e.type===t); return a[a.length-1]; };
+    const rtE = lastOf('rate'); window.__rate = rtE ? (Number(rtE.n)||4800) : 4800;
     const orgE = lastOf('org'), wmE = lastOf('wmsg'), fmE = lastOf('fmsg');
     window.__org = orgE ? orgE.n : ''; window.__wmsg = wmE ? wmE.n : ''; window.__fmsg = fmE ? fmE.n : '';
     const um = {}; ev.filter(e=>e.type==='user').forEach(e=>{ um[e.key] = e; });
@@ -5152,7 +5153,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">مالی سیشن</div><div class="rp-row"><b class="urdu">موجودہ سیشن: <span style="direction:ltr;display:inline-block;">'+esc(sessLabel())+'</span></b><span class="cand-sub" style="direction:ltr;">'+(window.__sess?esc(window.__sess.start):'')+'</span></div>'
       + '<button class="sheet-btn gold urdu" style="margin-top:10px;" onclick="sessOpen()"><span class="ic">🔄</span> نیا سیشن شروع کریں</button>'+(past?'<div class="rp-sec urdu">پچھلے سیشنز</div>'+past:'')+'</div>'
       + '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">امراء میں تبدیلی</div><div class="rp-row" style="gap:8px;margin-bottom:10px;">'
-      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>' + secOrg() + secZones() + secMuqamat() + secImport() + secUsers() + secBackup();
+      + '<button class="tab-btn urdu'+(setMode==='z'?' active':'')+'" style="flex:1;" onclick="setMode(\'z\')">👤 زونل امراء</button><button class="tab-btn urdu'+(setMode==='m'?' active':'')+'" style="flex:1;" onclick="setMode(\'m\')">🏘 مقامی امراء</button></div>'+body+'</div>' + secOrg() + secRate() + secZones() + secMuqamat() + secImport() + secUsers() + secBackup();
     stImHint();
   };
 
@@ -5173,6 +5174,23 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
       + '<button class="sheet-btn gold urdu" onclick="stSaveMsgs()"><span class="ic">💾</span> پیغامات محفوظ کریں</button>'
       + '<button class="tab-btn urdu" style="width:100%;margin-top:8px;" onclick="stResetMsgs()">↩ دونوں پیغامات طے شدہ حالت پر لائیں</button></div>';
   }
+  function secRate(){
+    const r = window.__rate || 4800;
+    return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">💰 مالیاتی ترتیب</div>'
+      + '<label class="dep-field"><span class="urdu">فی رکن سالانہ اعانت (روپے) — موجودہ: '+r+'</span><input id="stRate" type="number" inputmode="numeric" min="1" value="'+r+'"></label>'
+      + '<p class="cand-sub urdu" id="stRateHint" style="line-height:1.9;">ماہانہ فی رکن: <b>'+Math.round(r/12)+'</b> روپے۔ ہر مقام کی سالانہ عائد شدہ اعانت = ارکان کی تعداد (−معاف ارکان) × یہ رقم۔</p>'
+      + '<button class="sheet-btn gold urdu" onclick="stSaveRate()"><span class="ic">💾</span> رقم محفوظ کریں</button></div>';
+  }
+  window.stSaveRate = function(){
+    if(window.__role!=='admin' || window.__ro) return;
+    const v = Math.round(Number($('stRate').value));
+    if(!v || v < 1){ toast('درست رقم لکھیں'); return; }
+    if(v === (window.__rate||4800)){ toast('کوئی تبدیلی نہیں'); return; }
+    if(!confirm('فی رکن سالانہ اعانت '+v+' روپے (ماہانہ '+Math.round(v/12)+') کریں؟\nتمام مقامات کی موجودہ سالانہ اعانت اور باقی اسی کے مطابق دوبارہ حساب ہوں گے۔')) return;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'rate', reason:'فی رکن اعانت', zone:'', muqam:'', n:String(v), f:'', c:'', key:'', date:today(), t:now});
+    toast('فی رکن اعانت '+v+' ہو گئی ✓ — سب مقامات کا حساب بدل گیا');
+  };
   function secZones(){
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">زونز</div>'
       + DATA.zones.map(z=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><b class="urdu">'+esc(z.name)+'</b><button class="tab-btn urdu" style="padding:6px 14px;" onclick="stZone(\''+z.id+'\')">✏️ نام</button></div>').join('')
@@ -5343,7 +5361,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     if(window.__role!=='admin' || window.__ro) return;
     const c = carry();
     $('sessLabel').value = nextLabel(sessLabel()); $('sessDate').value = today();
-    $('sessInfo').innerHTML = 'موجودہ سیشن <b>'+esc(sessLabel())+'</b> کا کل باقی <b>'+fmt(c.b)+'</b> ('+c.n+' مقامات) نئے سیشن میں <b>سابقہ بقایاجات</b> بن جائے گا۔ نئے سیشن کی وصولی صفر سے شروع ہوگی اور سالانہ اعانت ارکان × 4800 کے مطابق نئی لگے گی۔ یہ عمل واپس نہیں ہوتا۔';
+    $('sessInfo').innerHTML = 'موجودہ سیشن <b>'+esc(sessLabel())+'</b> کا کل باقی <b>'+fmt(c.b)+'</b> ('+c.n+' مقامات) نئے سیشن میں <b>سابقہ بقایاجات</b> بن جائے گا۔ نئے سیشن کی وصولی صفر سے شروع ہوگی اور سالانہ اعانت ارکان × '+(window.__rate||4800)+' کے مطابق نئی لگے گی۔ یہ عمل واپس نہیں ہوتا۔';
     $('sessOverlay').classList.add('open');
   };
   window.sessClose = function(){ $('sessOverlay').classList.remove('open'); };
@@ -5395,7 +5413,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='muqamedit' && e.type!=='wmsg' && e.type!=='fmsg' && e.type!=='org' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='muqamedit' && e.type!=='wmsg' && e.type!=='fmsg' && e.type!=='rate' && e.type!=='org' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -5673,7 +5691,7 @@ function togglePw(){
       + '</div><ul class="dash-legend">'+leg+'</ul>';
     const mx = Math.max.apply(null, ms.map(x=>x.a).concat([1])), ta = ms.slice().sort((x,y)=>y.a-x.a).slice(0,8);
     const s4 = '<p class="dash-title urdu">مقام وار ارکان (سب سے زیادہ 8)</p><p class="dash-sub urdu">کل ارکان: '+A+'</p>'
-      + ta.map(x=>bar(x.n, x.a/mx*100, x.a+' ارکان', fmt(x.a*4800)+' سالانہ اعانت')).join('');
+      + ta.map(x=>bar(x.n, x.a/mx*100, x.a+' ارکان', fmt(x.a*(window.__rate||4800))+' سالانہ اعانت')).join('');
     const keep = c.scrollLeft;
     c.innerHTML = [s1,s2,s3,s4].map(slide).join('');
     c.scrollLeft = keep; setup();
