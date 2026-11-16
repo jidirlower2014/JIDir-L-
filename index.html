@@ -499,6 +499,7 @@ body.ro:not(.perm-cand) #candPage .sheet-btn.gold, body.ro:not(.perm-cand) #cand
 }
 #hdMonthly .m{transition:transform .12s;} #hdMonthly .m:hover{transform:translateY(-2px);}
 .dep-field textarea,#setPage textarea{width:100%; box-sizing:border-box; padding:11px 10px; border-radius:10px; border:1px solid var(--line); background:var(--paper); color:var(--ink); font-size:15px; line-height:1.9; font-family:inherit; resize:vertical;}
+.mdue{color:#e0463c; font-size:9.5px; font-weight:700; font-family:'Inter',sans-serif; direction:ltr; margin-top:3px; word-break:break-all; line-height:1.3;}
 </style>
 </head>
 <body>
@@ -5966,8 +5967,31 @@ window.__idle = function(){
   window.openHisabDetail = function(){
     const r = oh.apply(this, arguments);
     try{ if(window.__role==='admin' && window.__can && window.__can('fin')) document.querySelectorAll('#hdMonthly .m').forEach((el,i)=>{ el.style.cursor = 'pointer'; el.title = 'رقم میں ترمیم'; el.onclick = ()=>monEditOpen(MONTHS[i][0], MONTHS[i][1]); }); }catch(e){}
+    try{
+      const m = hisabTargetM; if(m && typeof dueSchedule==='function'){
+        const dues = dueSchedule(m);
+        document.querySelectorAll('#hdMonthly .m').forEach((el,i)=>{ const o = el.querySelector('.mdue'); if(o) o.remove(); el.insertAdjacentHTML('beforeend','<div class="mdue">'+dueFmt(dues[i])+'</div>'); });
+        const g = document.getElementById('hdMonthly');
+        if(g && !document.getElementById('mdueHint')) g.insertAdjacentHTML('afterend','<p id="mdueHint" class="cand-sub urdu" style="line-height:1.9;margin:6px 0 10px;"><b style="color:#e0463c;">سرخ رقم</b> = اس مہینے کی واجب قسط: (کل واجب الادا − گزشتہ مہینوں کی وصولی) ÷ بقیہ مہینے۔ جو مہینہ بغیر ادائیگی گزر جائے اس کی رقم اگلے مہینوں پر برابر بٹ جاتی ہے۔</p>');
+      }
+    }catch(e){}
     try{ const m = hisabTargetM, db = document.getElementById('muqDelBtn'); if(db) db.style.display = (window.__role==='admin' && !window.__ro && m && ((m._g ? m._g.mem.length : (m.arkan||0)) === 0)) ? '' : 'none'; }catch(e){}
     return r;
+  };
+  // ماہانہ واجب قسط: کل واجب الادا کو 12 مہینوں پر بانٹنا؛ جو مہینہ بغیر ادائیگی گزرے اس کا حصہ باقی مہینوں پر برابر بٹتا ہے
+  window.dueSchedule = function(m){
+    const keys = MONTHS.map(x=>x[0]), D = (m.sabiqa||0) + (m.saalana||0), paid = keys.map(k=>(m.monthly||{})[k]||0);
+    const c = Math.min(11, Math.max(0, (new Date().getMonth() - 6 + 12) % 12)), out = [];
+    let before = 0; for(let k=0; k<c; k++) before += paid[k];
+    const r = Math.max(0, D - before) / (12 - c);
+    let bal = D;
+    for(let k=0; k<12; k++){ if(k < c){ out.push(Math.max(0, bal) / (12 - k)); bal -= paid[k]; } else out.push(r); }
+    return out;
+  };
+  window.dueFmt = function(x){
+    const t = Math.floor(Math.max(0, x||0) * 10000) / 10000;
+    if(!t) return '—';
+    return Number.isInteger(t) ? t.toLocaleString('en-US') : t.toLocaleString('en-US', {minimumFractionDigits:4, maximumFractionDigits:4});
   };
   window.monEditOpen = function(k, label){
     const m = hisabTargetM; if(!m) return; cur = {k, label, v:(m.monthly||{})[k]||0};
