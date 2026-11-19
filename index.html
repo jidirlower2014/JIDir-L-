@@ -4893,12 +4893,15 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     const orgE = lastOf('org'), wmE = lastOf('wmsg'), fmE = lastOf('fmsg');
     window.__org = orgE ? orgE.n : ''; window.__wmsg = wmE ? wmE.n : ''; window.__fmsg = fmE ? fmE.n : '';
     const um = {}; ev.filter(e=>e.type==='user').forEach(e=>{ um[e.key] = e; });
-    window.__extraUsers = Object.keys(um).filter(k=>um[k].f!=='del').map(k=>({u:k, h:um[k].n, role:um[k].f, zone:um[k].zone||'', label:(um[k].x&&um[k].x.label)||um[k].f, pe:(um[k].x&&um[k].x.pe)||''}));
+    window.__disabled = Object.keys(um).filter(k=>um[k].f==='del' && k!=='admin');
+    window.__extraUsers = Object.keys(um).filter(k=>um[k].f!=='del' && k!=='admin').map(k=>({u:k, h:um[k].n, role:um[k].f, zone:um[k].zone||'', label:(um[k].x&&um[k].x.label)||um[k].f, pe:(um[k].x&&um[k].x.pe)||''}));
     ev.filter(e=>e.type==='zone').forEach(e=>{
       let zo = DATA.zones.find(x=>x.id===e.zone);
       if(zo){ zo.name = e.n; }
       else if(window.__role!=='zone'){ zo = {id:e.zone, real:true, name:e.n, ameer:'', ameerContact:'', muqamat:[]}; DATA.zones.push(zo); if(!AR_DATA[e.zone]) AR_DATA[e.zone] = []; if(window.__link) window.__link[e.zone] = {}; }
     });
+    const lo = {}; ev.filter(e=>e.type==='logout').forEach(e=>{ lo[e.key] = Math.max(lo[e.key]||0, e.t); }); window.__logoutAt = lo;
+    if(window.__checkForce) window.__checkForce();
     applyOrg();
     const sessEv = ev.filter(e=>e.type==='session'); window.__sessions = sessEv;
     const ls = sessEv[sessEv.length-1];
@@ -5244,17 +5247,52 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
   const RL = {zone:'زون ذمہ دار', cadmin:'ایڈمن (امیدواران)', fadmin:'ایڈمن (مالیات)', viewer:'صرف دیکھنے والا', admin:'سپر ایڈمن'};
   const pwOf = enc=>{ if(!enc) return '—'; if(!window.__apw) return '🔒'; return pwDec(enc, window.__apw) || '—'; };
   function secUsers(){
-    const ex = window.__extraUsers || [];
+    const ex = window.__extraUsers || [], over = {}; ex.forEach(x=>{ over[x.u] = 1; }); (window.__disabled||[]).forEach(k=>{ over[k] = 1; });
+    const btn = (ic, fn, un, extra)=>'<button class="tab-btn urdu" style="padding:6px 9px;'+(extra||'')+'" onclick="'+fn+'(\''+esc(un)+'\')">'+ic+'</button>';
     const row = (u, builtin)=>'<div class="rp-box rp-row" style="margin-bottom:8px;"><div><b style="direction:ltr;display:inline-block;">'+esc(u.u)+'</b><div class="cand-sub urdu">'+esc(RL[u.role]||u.role)+(u.zone?' • '+esc(zname(u.zone)):'')+'</div></div>'
       + '<div style="text-align:left;"><div class="cand-sub urdu">پاس ورڈ</div><b style="direction:ltr;display:inline-block;font-family:monospace;font-size:15px;user-select:all;">'+esc(pwOf(builtin ? BUILTIN_PE[u.u] : u.pe))+'</b></div>'
-      + (builtin ? '' : '<div style="display:flex;gap:6px;"><button class="tab-btn urdu" style="padding:6px 10px;" onclick="stUserEdit(\''+esc(u.u)+'\')">✏️</button><button class="tab-btn urdu" style="padding:6px 10px;" onclick="stUserDel(\''+esc(u.u)+'\')">🗑</button></div>')+'</div>';
-    const lock = window.__apw ? '' : '<button class="sheet-btn gold urdu" style="margin-bottom:10px;" onclick="stUnlock()"><span class="ic">🔓</span> پاس ورڈ دیکھنے کے لیے سپر ایڈمن پاس ورڈ لکھیں</button>';
+      + '<div style="display:flex;gap:5px;flex-wrap:wrap;">'+btn('🚪','stForceOut',u.u)+btn('🔑','stPwChange',u.u)+(builtin?'':btn('✏️','stUserEdit',u.u))+btn('🗑','stUserDel',u.u)+'</div></div>';
+    const lock = window.__apw ? '' : '<button class="sheet-btn gold urdu" style="margin-bottom:10px;" onclick="stUnlock()"><span class="ic">🔓</span> پاس ورڈ دیکھنے/بدلنے کے لیے سپر ایڈمن پاس ورڈ لکھیں</button>';
     return '<div class="rp-box"><div class="rp-sec urdu" style="margin-top:0;">🔐 لاگ ان اکاؤنٹس اور پاس ورڈ (صرف سپر ایڈمن)</div>'+lock
-      + USERS.filter(u=>u.u!=='admin').map(u=>row(u,true)).join('') + ex.map(u=>row(u,false)).join('')
-      + '<div class="rp-sec urdu">نیا اکاؤنٹ / پاس ورڈ تبدیل</div><div class="dep-row"><label class="dep-field"><span class="urdu">یوزر نیم (انگریزی)</span><input id="stUn" style="direction:ltr;text-align:left;" autocapitalize="none"></label><label class="dep-field"><span class="urdu">پاس ورڈ</span><input id="stPw" style="direction:ltr;text-align:left;" autocapitalize="none"></label></div>'
+      + '<p class="cand-sub urdu" style="line-height:1.9;">🚪 لاگ آؤٹ کرائیں • 🔑 پاس ورڈ بدلیں (اس اکاؤنٹ کو خود لاگ آؤٹ بھی کر دیتا ہے) • ✏️ قسم/زون • 🗑 اکاؤنٹ ختم</p>'
+      + '<button class="tab-btn urdu" style="width:100%;margin-bottom:10px;" onclick="stForceOutAll()">🚪 سب کو لاگ آؤٹ کرائیں (سپر ایڈمن کے علاوہ)</button>'
+      + USERS.filter(u=>u.u!=='admin' && !over[u.u]).map(u=>row(u,true)).join('') + ex.map(u=>row(u,false)).join('')
+      + '<div class="rp-sec urdu">نیا اکاؤنٹ / قسم تبدیل</div><div class="dep-row"><label class="dep-field"><span class="urdu">یوزر نیم (انگریزی)</span><input id="stUn" style="direction:ltr;text-align:left;" autocapitalize="none"></label><label class="dep-field"><span class="urdu">پاس ورڈ</span><input id="stPw" style="direction:ltr;text-align:left;" autocapitalize="none"></label></div>'
       + '<div class="dep-row"><label class="dep-field"><span class="urdu">قسم</span><select id="stRole" class="urdu">'+ROLES.map(r=>'<option value="'+r[0]+'">'+r[1]+'</option>').join('')+'</select></label><label class="dep-field"><span class="urdu">زون (زون ذمہ دار کے لیے)</span><select id="stUz" class="urdu">'+zopts('')+'</select></label></div>'
       + '<button class="sheet-btn gold urdu" onclick="stUserSave()"><span class="ic">➕</span> محفوظ کریں</button></div>';
   }
+  window.stForceOut = function(un){
+    if(window.__role!=='admin' || window.__ro || !confirm('"'+un+'" کو لاگ آؤٹ کرائیں؟')) return;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'logout', reason:'لاگ آؤٹ', zone:'', muqam:'', n:'', f:'', c:'', key:un, date:today(), t:now});
+    toast('"'+un+'" کو لاگ آؤٹ کا حکم بھیج دیا ✓ (اگلے سنک پر لاگ آؤٹ ہو گا)');
+  };
+  window.stForceOutAll = function(){
+    if(window.__role!=='admin' || window.__ro || !confirm('سپر ایڈمن کے علاوہ سب کو لاگ آؤٹ کرائیں؟')) return;
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'logout', reason:'سب لاگ آؤٹ', zone:'', muqam:'', n:'', f:'', c:'', key:'*', date:today(), t:now});
+    toast('سب کو لاگ آؤٹ کا حکم بھیج دیا ✓');
+  };
+  window.stPwChange = function(un){
+    if(window.__role!=='admin' || window.__ro) return;
+    if(!window.__apw){ toast('پہلے "پاس ورڈ دیکھنے/بدلنے کے لیے" بٹن سے سپر ایڈمن پاس ورڈ لکھ کر ان لاک کریں'); return; }
+    const base = (window.__extraUsers||[]).find(x=>x.u===un) || USERS.find(x=>x.u===un); if(!base) return;
+    const pw = prompt('"'+un+'" کا نیا پاس ورڈ لکھیں (کم از کم 4 حروف)'); if(pw===null) return;
+    if(pw.length < 4){ toast('پاس ورڈ کم از کم 4 حروف کا ہو'); return; }
+    const now = Date.now();
+    addEvent({id:now.toString(36)+Math.random().toString(36).slice(2,6), type:'user', reason:'پاس ورڈ تبدیل', zone:base.zone||'', muqam:'', n:sha256(AUTH_SALT+'|'+un+'|'+pw), f:base.role, c:'', key:un, date:today(), t:now, x:{label:RL[base.role]||base.role, pe:pwEnc(pw, window.__apw)}});
+    addEvent({id:now.toString(36)+'o'+Math.random().toString(36).slice(2,5), type:'logout', reason:'لاگ آؤٹ', zone:'', muqam:'', n:'', f:'', c:'', key:un, date:today(), t:now+1});
+    toast('پاس ورڈ بدل گیا ✓ اور اس اکاؤنٹ کو لاگ آؤٹ کر دیا گیا');
+  };
+  window.allUsers = function(){
+    const ex = window.__extraUsers || [], over = {}; ex.forEach(x=>{ over[x.u] = 1; }); (window.__disabled||[]).forEach(k=>{ over[k] = 1; });
+    return USERS.filter(u=>u.u==='admin' || !over[u.u]).concat(ex);
+  };
+  window.__checkForce = function(){
+    const u = window.__user; if(!u || u==='admin' || !window.__logoutAt) return;
+    const t = Math.max(window.__logoutAt[u]||0, window.__logoutAt['*']||0);
+    if(t && t > (window.__loginT||0)){ try{ alert('آپ کو سپر ایڈمن نے لاگ آؤٹ کر دیا ہے۔ دوبارہ لاگ ان کریں۔'); }catch(e){} doLogout(); }
+  };
   window.stUnlock = function(){
     const p = prompt('سپر ایڈمن (admin) کا پاس ورڈ لکھیں'); if(!p) return;
     const a = USERS.find(u=>u.u==='admin');
@@ -5414,7 +5452,7 @@ const SHEET_API_KEY = '';   // اختیاری: وہی SECRET جو Apps Script م
     $('rMonthW').style.display = mode==='month' ? 'block':'none';
     $('rRangeW').style.display = mode==='range' ? 'flex':'none';
     const z = $('rZone').value, ty = $('rType').value;
-    let l = events().filter(e=>e.type!=='edit' && e.type!=='muqam' && e.type!=='muqamdel' && e.type!=='muqamedit' && e.type!=='wmsg' && e.type!=='fmsg' && e.type!=='rate' && e.type!=='org' && e.type!=='ameer' && e.type!=='session' && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
+    let l = events().filter(e=>(e.type==='add' || e.type==='remove') && e.reason!=='منتقل');   // منتقلی/ترمیم رپورٹ میں نہیں
     if(z!=='all') l = l.filter(e=>e.zone===z);
     if(ty!=='all') l = l.filter(e=>e.type===ty);
     if(mode==='month' && $('rMonth').value) l = l.filter(e=>e.date.slice(0,7)===$('rMonth').value);
@@ -6226,6 +6264,7 @@ function sha256(str){
     window.__can = k => !window.__ro || (k==='cand' && window.__permCand) || (k==='fin' && window.__permFin); window.__zone = u.zone || null; window.__user = u.u;
     document.body.classList.remove('locked');
     document.body.classList.add('authed');
+    setTimeout(()=>{ if(window.__checkForce) window.__checkForce(); }, 400);
     document.body.classList.toggle('role-zone', u.role==='zone');
     document.body.classList.toggle('ro', adm);
     document.body.classList.toggle('perm-cand', u.role==='cadmin');
@@ -6257,13 +6296,14 @@ function sha256(str){
     const un = $('loginUser').value.trim().toLowerCase();
     const pw = $('loginPass').value;
     const h = sha256(AUTH_SALT + '|' + un + '|' + pw);
-    const u = USERS.concat(window.__extraUsers||[]).find(x=>x.u===un && x.h===h);
+    const u = (window.allUsers ? allUsers() : USERS).find(x=>x.u===un && x.h===h);
     if(!u){
-      if(window.__api && window.__api.url() && !window.__loginRetry){ window.__loginRetry = true; $('loginErr').textContent = 'اکاؤنٹ چیک ہو رہا ہے…'; window.__api.sync().then(()=>{ window.__loginRetry = false; doLogin(); }); return; }
+      if(window.__api && window.__api.url() && !window.__loginRetry){ window.__loginRetry = true; $('loginErr').textContent = 'اکاؤنٹ چیک ہو رہا ہے…'; Promise.race([Promise.resolve(window.__api.sync()).catch(()=>{}), new Promise(r=>setTimeout(r, 3500))]).then(()=>{ doLogin(); }); return; }
       window.__loginRetry = false; $('loginErr').textContent = 'یوزر نیم یا پاس ورڈ غلط ہے'; return;
     }
-    $('loginErr').textContent = '';
-    if(u.u==='admin') window.__apw = pw;   // سپر ایڈمن کے پاس ورڈ سے اکاؤنٹس کے پاس ورڈ کھلتے ہیں (صرف میموری میں)
+    $('loginErr').textContent = ''; window.__loginRetry = false;
+    if(u.u==='admin') window.__apw = pw;
+    window.__loginT = Date.now(); store('jid_sess_t', String(window.__loginT));   // سپر ایڈمن کے پاس ورڈ سے اکاؤنٹس کے پاس ورڈ کھلتے ہیں (صرف میموری میں)
     store('jid_session', u.u + '|' + u.h);
     $('loginPass').value = '';
     applyUser(u, true);
@@ -6277,8 +6317,8 @@ function sha256(str){
   // پہلے سے لاگ ان ہو تو واپس بحال کریں
   const sess = load('jid_session');
   let restored = null;
-  if(sess){ const [su, sh] = sess.split('|'); restored = USERS.concat(window.__extraUsers||[]).find(x=>x.u===su && x.h===sh) || null; }
-  if(restored){ applyUser(restored, false); }
+  if(sess){ const [su, sh] = sess.split('|'); restored = (window.allUsers ? allUsers() : USERS).find(x=>x.u===su && x.h===sh) || null; }
+  if(restored){ window.__loginT = Number(load('jid_sess_t')) || Date.now(); store('jid_sess_t', String(window.__loginT)); applyUser(restored, false); }
   else { document.body.classList.add('locked'); $('loginOverlay').classList.add('open'); }
 })();
 </script>
